@@ -1,15 +1,20 @@
-import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import type { Metadata, Viewport } from 'next'
+import { Geist, Geist_Mono, Cormorant_Garamond } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const geist = Geist({ subsets: ["latin"] });
+const geistMono = Geist_Mono({ subsets: ["latin"] });
+const cormorant = Cormorant_Garamond({ 
+  weight: ['400', '500', '600', '700'],
+  subsets: ["latin"],
+  variable: '--font-serif'
+});
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: 'Hijab & Fashion Hub - Girls Fashion Accessories Bangladesh',
+  description: 'Elegant girls fashion accessories including hijabs, earrings, handbags, hair clips, rings, bracelets, and combo offers. Fast delivery across Bangladesh.',
+  keywords: 'hijab, earrings, handbags, hair clips, rings, bracelets, girls fashion, Bangladesh',
   icons: {
     icon: [
       {
@@ -29,14 +34,24 @@ export const metadata: Metadata = {
   },
 }
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#faf8f6' },
+    { media: '(prefers-color-scheme: dark)', color: '#261425' },
+  ],
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className="font-sans antialiased">
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geist.className} ${geistMono.variable} ${cormorant.variable} font-sans antialiased`}>
         {children}
         <Analytics />
       </body>
