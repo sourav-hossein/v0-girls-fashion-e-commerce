@@ -1,0 +1,57 @@
+{
+  "navbar": {
+    "home": "হোম",
+    "shop": "শপ",
+    "cart": "কার্ট",
+    "wishlist": "উইশলিস্ট",
+    "account": "অ্যাকাউন্ট",
+    "logout": "লগআউট",
+    "login": "লগইন",
+    "register": "রেজিস্টার"
+  },
+  "common": {
+    "addToCart": "কার্টে যোগ করুন",
+    "addToWishlist": "উইশলিস্টে যোগ করুন",
+    "removeFromWishlist": "উইশলিস্ট থেকে সরান",
+    "price": "মূল্য",
+    "discount": "ছাড়",
+    "quantity": "পরিমাণ",
+    "total": "মোট",
+    "checkout": "চেকআউট",
+    "continueShopping": "কেনাকাটা চালিয়ে যান",
+    "emptyCart": "আপনার কার্ট খালি",
+    "emptyWishlist": "আপনার উইশলিস্ট খালি"
+  },
+  "checkout": {
+    "shippingAddress": "ডেলিভারি ঠিকানা",
+    "paymentMethod": "পেমেন্ট পদ্ধতি",
+    "orderSummary": "অর্ডার সারমর্ম",
+    "subtotal": "সাবটোটাল",
+    "deliveryCharge": "ডেলিভারি চার্জ",
+    "discount": "ছাড়",
+    "total": "মোট পরিমাণ",
+    "placeOrder": "অর্ডার দিন",
+    "cardPayment": "কার্ড পেমেন্ট",
+    "bkash": "বিকাশ",
+    "nagad": "নগদ",
+    "cashOnDelivery": "ডেলিভারিতে নগদ"
+  },
+  "dashboard": {
+    "myOrders": "আমার অর্ডার",
+    "orderHistory": "অর্ডার ইতিহাস",
+    "addresses": "ঠিকানা",
+    "settings": "সেটিংস",
+    "profile": "প্রোফাইল",
+    "orderStatus": "অর্ডার স্ট্যাটাস",
+    "trackOrder": "অর্ডার ট্র্যাক করুন"
+  },
+  "admin": {
+    "dashboard": "ড্যাশবোর্ড",
+    "products": "পণ্য",
+    "orders": "অর্ডার",
+    "analytics": "বিশ্লেষণ",
+    "totalSales": "মোট বিক্রয়",
+    "totalOrders": "মোট অর্ডার",
+    "lowStock": "স্টক কম"
+  }
+}

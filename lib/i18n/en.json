@@ -1,0 +1,57 @@
+{
+  "navbar": {
+    "home": "Home",
+    "shop": "Shop",
+    "cart": "Cart",
+    "wishlist": "Wishlist",
+    "account": "Account",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
+  },
+  "common": {
+    "addToCart": "Add to Cart",
+    "addToWishlist": "Add to Wishlist",
+    "removeFromWishlist": "Remove from Wishlist",
+    "price": "Price",
+    "discount": "Discount",
+    "quantity": "Quantity",
+    "total": "Total",
+    "checkout": "Checkout",
+    "continueShopping": "Continue Shopping",
+    "emptyCart": "Your cart is empty",
+    "emptyWishlist": "Your wishlist is empty"
+  },
+  "checkout": {
+    "shippingAddress": "Shipping Address",
+    "paymentMethod": "Payment Method",
+    "orderSummary": "Order Summary",
+    "subtotal": "Subtotal",
+    "deliveryCharge": "Delivery Charge",
+    "discount": "Discount",
+    "total": "Total Amount",
+    "placeOrder": "Place Order",
+    "cardPayment": "Card Payment",
+    "bkash": "bKash",
+    "nagad": "Nagad",
+    "cashOnDelivery": "Cash on Delivery"
+  },
+  "dashboard": {
+    "myOrders": "My Orders",
+    "orderHistory": "Order History",
+    "addresses": "Addresses",
+    "settings": "Settings",
+    "profile": "Profile",
+    "orderStatus": "Order Status",
+    "trackOrder": "Track Order"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "orders": "Orders",
+    "analytics": "Analytics",
+    "totalSales": "Total Sales",
+    "totalOrders": "Total Orders",
+    "lowStock": "Low Stock"
+  }
+}
