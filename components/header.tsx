@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Heart, ShoppingCart, User, Menu, X, Search } from 'lucide-react'
+import { Heart, ShoppingCart, User, Menu, X, Search, Phone } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,6 +10,13 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
@@ -61,9 +68,37 @@ export default function Header() {
             <Link href="/cart" className="p-2 hover:bg-muted rounded-lg transition-colors">
               <ShoppingCart className="w-5 h-5 text-foreground" />
             </Link>
-            <Link href="/account" className="p-2 hover:bg-muted rounded-lg transition-colors">
-              <User className="w-5 h-5 text-foreground" />
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <User className="w-5 h-5 text-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem asChild>
+                  <Link href="/account" className="cursor-pointer">
+                    My Account
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/account/orders" className="cursor-pointer">
+                    Order History
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/auth/phone" className="cursor-pointer flex items-center gap-2">
+                    <Phone className="w-4 h-4" />
+                    Phone Login
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/auth/login" className="cursor-pointer">
+                    Email Login
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Mobile Menu */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
