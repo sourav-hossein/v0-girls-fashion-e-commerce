@@ -1,55 +1,69 @@
 'use client'
 
 import { Moon, Sun, Globe } from 'lucide-react'
-import { useAppContext } from './providers'
+import { useTheme } from 'next-themes'
+import { useLanguage } from '@/components/language-provider'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
 
 export function ThemeLanguageToggle() {
-  const { isDark, setIsDark, language, setLanguage } = useAppContext()
+  const { theme, setTheme } = useTheme()
+  const { language, setLanguage } = useLanguage()
 
   return (
-    <div className="flex items-center gap-2">
-      {/* Theme Toggle */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setIsDark(!isDark)}
-        className="relative w-9 h-9"
-      >
-        <Sun className="w-5 h-5 absolute rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-        <Moon className="w-5 h-5 absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-        <span className="sr-only">Toggle theme</span>
-      </Button>
-
-      {/* Language Toggle */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="w-9 h-9">
-            <Globe className="w-5 h-5" />
-            <span className="sr-only">Select language</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={() => setLanguage('en')}
-            className={language === 'en' ? 'bg-accent' : ''}
-          >
-            English
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => setLanguage('bn')}
-            className={language === 'bn' ? 'bg-accent' : ''}
-          >
-            বাংলা
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon">
+          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">Theme & Language Settings</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuLabel className="text-xs uppercase font-semibold text-muted-foreground">Theme</DropdownMenuLabel>
+        <DropdownMenuCheckboxItem
+          checked={theme === 'light'}
+          onCheckedChange={() => setTheme('light')}
+        >
+          Light
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem
+          checked={theme === 'dark'}
+          onCheckedChange={() => setTheme('dark')}
+        >
+          Dark
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem
+          checked={theme === 'system'}
+          onCheckedChange={() => setTheme('system')}
+        >
+          System
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-xs uppercase font-semibold text-muted-foreground">Language</DropdownMenuLabel>
+        <DropdownMenuCheckboxItem
+          checked={language === 'en'}
+          onCheckedChange={() => setLanguage('en')}
+          className="flex items-center gap-2"
+        >
+          <Globe className="w-4 h-4" />
+          English
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem
+          checked={language === 'bn'}
+          onCheckedChange={() => setLanguage('bn')}
+        >
+          বাংলা (Bengali)
+        </DropdownMenuCheckboxItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

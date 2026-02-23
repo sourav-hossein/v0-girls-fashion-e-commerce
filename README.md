@@ -1,59 +1,111 @@
 # Bangladesh Girls Fashion E-commerce Platform
 
-A modern, mobile-first e-commerce website for selling girls fashion accessories in Bangladesh. Built with Next.js, Supabase, and SSLCommerz payment gateway.
+A modern, mobile-first e-commerce website for selling girls fashion accessories in Bangladesh. Built with Next.js 16, Supabase, SSLCommerz payment gateway, with full i18n support (English/Bengali) and dark mode.
 
 ## Features
 
+### Authentication & User Management
+- **Dual Authentication Methods**:
+  - Email & Password with Supabase Auth
+  - Phone-based OTP authentication (Bangladesh format)
+- **User Profiles** with editable information
+- **Multiple Address Management** with default address selection
+- **Role-based Access Control** (Admin/Customer)
+- **Automatic Phone Verification**
+
 ### Customer Features
-- **Email & Password Authentication** with Supabase Auth
-- **Phone number field** with Bangladesh format validation
-- **User Profile Dashboard** with order history
-- **Address System** with Division, District, Thana, and full address
-- **Wishlist** for saving favorite products
-- **Shopping Cart** with persistent storage in database
-- **Multiple Payment Options**:
-  - SSLCommerz (Card, bKash, Nagad)
-  - Cash on Delivery
+- **Product Discovery**:
+  - Advanced filtering by category and price range
+  - Full-text search functionality
+  - Sorting options (newest, price low-to-high, price high-to-low)
+  - Pagination for browsing
+  - Instagram-style product cards
+- **Shopping Experience**:
+  - Persistent shopping cart with database storage
+  - Wishlist for saving favorite items
+  - Real-time cart calculations
+  - Coupon code support
+- **Checkout & Payment**:
+  - Complete checkout flow with address collection
+  - Multiple payment options:
+    - SSLCommerz (Card, bKash, Nagad)
+    - Cash on Delivery
+  - Automatic delivery charge calculation (Dhaka: 60 BDT, Outside: 120 BDT)
+  - Order confirmation and tracking
+- **User Dashboard**:
+  - Order history with detailed tracking
+  - Multiple address management
+  - Account settings
+  - Payment history
 
 ### Product System
 - **Categories**: Earrings, Hijabs, Handbags, Hair Accessories, Rings, Bracelets, Combo Offers
-- **Multiple product images** with main image selection
-- **Price & discount pricing**
-- **Stock quantity tracking**
-- **Color variants & sizes**
-- **Featured & trending toggles**
-
-### Shop Features
-- **Advanced filtering** by category and price range
-- **Search** by product name
-- **Sorting** options (newest, low to high, high to low price)
-- **Pagination** for product browsing
-- **Responsive design** for all devices
-
-### Checkout & Orders
-- **Shipping address collection** with Bangladesh regions
-- **Automatic delivery charge calculation**:
-  - Inside Dhaka: 60 BDT
-  - Outside Dhaka: 120 BDT
-- **Coupon code support**
-- **Order confirmation** and status tracking
-- **Order history** in user dashboard
+- **Rich Product Information**:
+  - Multiple images with main image selection
+  - Detailed descriptions
+  - Price and discount pricing
+  - Stock quantity tracking
+  - Color and size variants
+  - Featured and trending badges
+  - Customer reviews and ratings
 
 ### Admin Panel
-- **Role-based access control** (admin/customer)
+- **Dashboard Analytics**:
+  - Total sales and revenue tracking
+  - Order count and trends
+  - Low stock alerts
+  - Quick statistics
 - **Product Management**:
   - Add, edit, delete products
-  - Manage stock and variants
-  - Upload images
+  - Manage categories
+  - Stock and variant management
+  - Image uploads and management
 - **Order Management**:
-  - View all orders
-  - Change order status (Pending → Confirmed → Shipped → Delivered)
-  - Track payments
-- **Dashboard Analytics**:
-  - Total sales
-  - Total orders
-  - Low stock warnings
-  - Recent orders
+  - View all orders with filtering
+  - Order status workflow (Pending → Confirmed → Shipped → Delivered)
+  - Customer information and tracking
+  - Payment status monitoring
+- **Admin-only Routes** with role-based protection
+
+### Internationalization & Localization
+- **Dual Language Support**:
+  - English (Default)
+  - Bengali (বাংলা)
+- **Language Persistence** with localStorage
+- **Complete Translation System** for UI strings
+- **Easy Language Switching** from header menu
+
+### Design & Theme
+- **Dark/Light Mode Toggle** with system preference support
+- **Soft Pastel Color Scheme**:
+  - Rose Pink (#b46f7f) - Primary
+  - Lavender (#a8a3d8) - Secondary
+  - Peach (#d4a5a5) - Accent
+- **Elegant Typography** with Cormorant Garamond for headings
+- **Responsive Mobile-First Design**
+- **Smooth Animations & Transitions**
+- **Accessibility Features** (ARIA labels, semantic HTML)
+
+### Database & Security
+- **14 Production Tables** with proper relationships
+- **Row Level Security (RLS)** for data protection
+- **User Role Management** system
+- **Order and Payment Tracking** with transaction logs
+- **Phone Verification** table with OTP management
+- **Address Management** with multiple saved locations
+
+### Development Features
+- **Comprehensive Error Handling** with custom error classes
+- **Advanced Logging System** with development and production modes
+- **Input Validation Utilities**:
+  - Bangladesh phone number validation
+  - Email and password validation
+  - OTP validation
+  - Address validation
+  - Price and quantity validation
+- **TypeScript** throughout the codebase
+- **SEO Optimized** with proper metadata
+- **Performance Optimized** with server-side rendering
 
 ## Tech Stack
 

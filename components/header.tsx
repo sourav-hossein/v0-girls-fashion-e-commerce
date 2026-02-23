@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ThemeLanguageToggle } from '@/components/theme-language-toggle'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
@@ -68,6 +69,7 @@ export default function Header() {
             <Link href="/cart" className="p-2 hover:bg-muted rounded-lg transition-colors">
               <ShoppingCart className="w-5 h-5 text-foreground" />
             </Link>
+            <ThemeLanguageToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
