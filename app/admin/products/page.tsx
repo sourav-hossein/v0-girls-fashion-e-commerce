@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth'
 import { createAdminSupabaseClient } from '@/lib/supabase-admin'
 import AdminProductsList from '@/components/admin-products-list'
 import { Button } from '@/components/ui/button'
@@ -9,6 +10,7 @@ export const metadata = {
 }
 
 export default async function AdminProductsPage() {
+  await requireAdmin()
   const supabase = await createAdminSupabaseClient()
 
   const { data: products } = await supabase

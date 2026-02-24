@@ -10,40 +10,26 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from 'sonner'
 import { MapPin, Trash2, Check, Plus, Edit2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import {
+  divisions,
+  districtsByDivisionId,
+  thanasByDistrictId,
+  getDivisionName,
+  getDistrictName,
+  getThanaName,
+} from '@/lib/geo-data'
 
 interface UserAddress {
   id: string
   full_name: string
   phone_number: string
-  division: string
-  district: string
-  thana: string
+  division_id: string
+  district_id: string
+  thana_id: string
   area?: string
   full_address: string
   postal_code?: string
   is_default: boolean
-}
-
-const DIVISIONS = [
-  'Dhaka',
-  'Chattogram',
-  'Khulna',
-  'Sylhet',
-  'Barisal',
-  'Rajshahi',
-  'Rangpur',
-  'Mymensingh',
-]
-
-const DISTRICTS: Record<string, string[]> = {
-  'Dhaka': ['Dhaka', 'Narayanganj', 'Gazipur', 'Tangail', 'Munshiganj', 'Manikganj'],
-  'Chattogram': ['Chattogram', 'Cox\'s Bazar', 'Bandarban', 'Rangamati', 'Feni', 'Noakhali'],
-  'Khulna': ['Khulna', 'Bagerhat', 'Satkhira', 'Jhenaidah'],
-  'Sylhet': ['Sylhet', 'Moulvibazar', 'Sunamganj', 'Habiganj'],
-  'Barisal': ['Barisal', 'Patuakhali', 'Pirojpur', 'Bhola'],
-  'Rajshahi': ['Rajshahi', 'Natore', 'Naogaon', 'Nawabganj'],
-  'Rangpur': ['Rangpur', 'Dinajpur', 'Thakurgaon', 'Nilphamari'],
-  'Mymensingh': ['Mymensingh', 'Jashore', 'Kishoreganj'],
 }
 
 export function UserAddressesList() {
@@ -55,9 +41,9 @@ export function UserAddressesList() {
   const [formData, setFormData] = useState({
     full_name: '',
     phone_number: '',
-    division: '',
-    district: '',
-    thana: '',
+    division_id: '',
+    district_id: '',
+    thana_id: '',
     area: '',
     full_address: '',
     postal_code: '',
@@ -107,9 +93,9 @@ export function UserAddressesList() {
       setFormData({
         full_name: '',
         phone_number: '',
-        division: '',
-        district: '',
-        thana: '',
+        division_id: '',
+        district_id: '',
+        thana_id: '',
         area: '',
         full_address: '',
         postal_code: '',
@@ -163,9 +149,9 @@ export function UserAddressesList() {
     setFormData({
       full_name: address.full_name,
       phone_number: address.phone_number,
-      division: address.division,
-      district: address.district,
-      thana: address.thana,
+      division_id: address.division_id,
+      district_id: address.district_id,
+      thana_id: address.thana_id,
       area: address.area || '',
       full_address: address.full_address,
       postal_code: address.postal_code || '',
@@ -175,6 +161,7 @@ export function UserAddressesList() {
   }
 
   return (
+    <div>
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-serif font-bold">Delivery Addresses</h2>
@@ -186,9 +173,9 @@ export function UserAddressesList() {
                 setFormData({
                   full_name: '',
                   phone_number: '',
-                  division: '',
-                  district: '',
-                  thana: '',
+                  division_id: '',
+                  district_id: '',
+                  thana_id: '',
                   area: '',
                   full_address: '',
                   postal_code: '',
@@ -231,49 +218,70 @@ export function UserAddressesList() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="division">Division *</Label>
-                  <Select value={formData.division} onValueChange={(value) => setFormData({ ...formData, division: value, district: '', thana: '' })}>
-                    <SelectTrigger id="division">
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DIVISIONS.map((div) => (
-                        <SelectItem key={div} value={div}>
-                          {div}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="division">Division *</Label>
+                <Select
+                  value={formData.division_id}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, division_id: value, district_id: '', thana_id: '' })
+                  }
+                >
+                  <SelectTrigger id="division">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {divisions.map((div) => (
+                      <SelectItem key={div.id} value={div.id}>
+                        {div.name_en}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="district">District *</Label>
-                  <Select value={formData.district} onValueChange={(value) => setFormData({ ...formData, district: value, thana: '' })}>
-                    <SelectTrigger id="district">
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {formData.division && DISTRICTS[formData.division]?.map((dist) => (
-                        <SelectItem key={dist} value={dist}>
-                          {dist}
+              <div className="space-y-2">
+                <Label htmlFor="district">District *</Label>
+                <Select
+                  value={formData.district_id}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, district_id: value, thana_id: '' })
+                  }
+                >
+                  <SelectTrigger id="district">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {formData.division_id &&
+                      districtsByDivisionId[formData.division_id]?.map((dist) => (
+                        <SelectItem key={dist.id} value={dist.id}>
+                          {dist.name_en}
                         </SelectItem>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  </SelectContent>
+                </Select>
+              </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="thana">Thana/Upazila *</Label>
-                <Input
-                  id="thana"
-                  value={formData.thana}
-                  onChange={(e) => setFormData({ ...formData, thana: e.target.value })}
-                  placeholder="e.g., Banani, Mirpur"
-                  required
-                />
+              <Select
+                value={formData.thana_id}
+                onValueChange={(value) => setFormData({ ...formData, thana_id: value })}
+              >
+                <SelectTrigger id="thana">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  {formData.district_id &&
+                    thanasByDistrictId[formData.district_id]?.map((thana) => (
+                      <SelectItem key={thana.id} value={thana.id}>
+                        {thana.name_en}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+                </Select>
               </div>
+              
 
               <div className="space-y-2">
                 <Label htmlFor="area">Area/Locality</Label>
@@ -366,7 +374,7 @@ export function UserAddressesList() {
                   {address.area && `, ${address.area}`}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {address.thana}, {address.district}, {address.division}
+                  {getThanaName(address.thana_id)}, {getDistrictName(address.district_id)}, {getDivisionName(address.division_id)}
                   {address.postal_code && ` ${address.postal_code}`}
                 </p>
 
@@ -386,6 +394,7 @@ export function UserAddressesList() {
           ))
         )}
       </div>
+    </div>
     </div>
   )
 }

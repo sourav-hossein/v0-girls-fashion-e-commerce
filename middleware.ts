@@ -27,20 +27,6 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect admin routes
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    if (!request.nextUrl.pathname.startsWith('/admin/login')) {
-      const adminPassword = process.env.ADMIN_PASSWORD || ''
-      const adminCookie = request.cookies.get('admin_auth')?.value || ''
-
-      if (!adminPassword || adminCookie !== adminPassword) {
-        const loginUrl = new URL('/admin/login', request.url)
-        loginUrl.searchParams.set('next', request.nextUrl.pathname)
-        return NextResponse.redirect(loginUrl)
-      }
-    }
-  }
-
   // Protect account routes
   if (request.nextUrl.pathname.startsWith('/account')) {
     if (!user) {
@@ -52,6 +38,31 @@ export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname === '/checkout') {
     if (!user) {
       return NextResponse.redirect(new URL('/auth/login', request.url))
+    }
+  }
+
+  const isAdminPath = request.nextUrl.pathname.startsWith('/admin')
+  const isAdminApi = request.nextUrl.pathname.startsWith('/api/admin')
+
+  if (isAdminPath || isAdminApi) {
+    if (!user) {
+      if (isAdminApi) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      return NextResponse.redirect(new URL('/auth/login', request.url))
+    }
+
+    const { data: profile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || profile.role !== 'admin') {
+      if (isAdminApi) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+      return NextResponse.redirect(new URL('/', request.url))
     }
   }
 

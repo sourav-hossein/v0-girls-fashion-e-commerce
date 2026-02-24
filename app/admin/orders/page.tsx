@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth'
 import { createAdminSupabaseClient } from '@/lib/supabase-admin'
 import AdminOrdersList from '@/components/admin-orders-list'
 
@@ -6,6 +7,7 @@ export const metadata = {
 }
 
 export default async function AdminOrdersPage() {
+  await requireAdmin()
   const supabase = await createAdminSupabaseClient()
 
   const { data: orders } = await supabase

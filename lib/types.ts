@@ -4,10 +4,7 @@ export interface User {
   full_name?: string
   profile_photo_url?: string
   phone_number?: string
-  division?: string
-  district?: string
-  thana?: string
-  full_address?: string
+  role?: 'customer' | 'admin'
   created_at: string
   updated_at: string
 }

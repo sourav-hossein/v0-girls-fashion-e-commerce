@@ -10,7 +10,7 @@ A modern, mobile-first e-commerce website for selling girls fashion accessories 
   - Phone-based OTP authentication (Bangladesh format)
 - **User Profiles** with editable information
 - **Multiple Address Management** with default address selection
-- **Admin Access** with environment password
+- **Admin Access** with role-based control
 - **Automatic Phone Verification**
 
 ### Customer Features
@@ -65,7 +65,7 @@ A modern, mobile-first e-commerce website for selling girls fashion accessories 
   - Order status workflow (Pending → Confirmed → Shipped → Delivered)
   - Customer information and tracking
   - Payment status monitoring
-- **Admin-only Routes** with password protection
+- **Admin-only Routes** with role-based protection
 
 ### Internationalization & Localization
 - **Dual Language Support**:
@@ -89,7 +89,7 @@ A modern, mobile-first e-commerce website for selling girls fashion accessories 
 ### Database & Security
 - **14 Production Tables** with proper relationships
 - **Row Level Security (RLS)** for data protection
-- **Password-protected Admin Panel**
+- **Role-protected Admin Panel**
 - **Order and Payment Tracking** with transaction logs
 - **Phone Verification** table with OTP management
 - **Address Management** with multiple saved locations
@@ -176,7 +176,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Security
 - **Row Level Security (RLS)** enabled on all tables
-- **Admin access control** via environment password
+- **Admin access control** via user role
 - **Secure password hashing** with bcrypt
 - **Protected API routes** with authentication checks
 
@@ -213,7 +213,7 @@ The platform integrates with SSLCommerz for secure payments in Bangladesh.
 
 ## Admin Access
 
-Set `ADMIN_PASSWORD` in your environment. Visit `/admin/login` and enter the password to access admin routes.
+Set a user's role to `admin` in the `users` table to grant admin access.
 
 ## Deployment
 

@@ -3,22 +3,123 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { User, Mail, Phone, MapPin } from 'lucide-react'
-import { useState } from 'react'
+import { User, Mail, Phone, MapPin, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase'
+import { toast } from 'sonner'
 
 export default function AccountDashboard() {
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    orders: 0,
+    wishlist: 0,
+    addresses: 0,
+  })
   const [userData, setUserData] = useState({
-    fullName: 'Sample User',
-    email: 'user@example.com',
-    phoneNumber: '+88001xxxxxxxxx',
-    division: 'Dhaka',
-    district: 'Dhaka',
-    thana: 'Dhanmondi',
-    fullAddress: '123 Sample Street',
+    id: '',
+    fullName: '',
+    email: '',
+    phoneNumber: '',
   })
 
-  
+  useEffect(() => {
+    const loadAccount = async () => {
+      try {
+        const supabase = createClient()
+        const { data: authData, error: authError } = await supabase.auth.getUser()
+        if (authError || !authData.user) {
+          throw new Error('Not authenticated')
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('id, full_name, email, phone_number')
+          .eq('id', authData.user.id)
+          .single()
+
+        if (!profileError && profile) {
+          setUserData({
+            id: profile.id,
+            fullName: profile.full_name || '',
+            email: profile.email || authData.user.email || '',
+            phoneNumber: profile.phone_number || '',
+          })
+        } else {
+          setUserData({
+            id: authData.user.id,
+            fullName: authData.user.user_metadata?.full_name || '',
+            email: authData.user.email || '',
+            phoneNumber: '',
+          })
+        }
+
+        const [ordersRes, wishlistRes, addressRes] = await Promise.all([
+          supabase
+            .from('orders')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', authData.user.id),
+          supabase
+            .from('wishlists')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', authData.user.id),
+          supabase
+            .from('user_addresses')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', authData.user.id),
+        ])
+
+        setStats({
+          orders: ordersRes.count || 0,
+          wishlist: wishlistRes.count || 0,
+          addresses: addressRes.count || 0,
+        })
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to load account')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadAccount()
+  }, [])
+
+  const handleSave = async () => {
+    if (!userData.id) return
+    setIsSaving(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('users')
+        .update({
+          full_name: userData.fullName,
+          phone_number: userData.phoneNumber,
+        })
+        .eq('id', userData.id)
+
+      if (error) throw error
+      toast.success('Profile updated')
+      setIsEditing(false)
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update profile')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-serif font-bold text-foreground mb-2">My Profile</h1>
+          <p className="text-muted-foreground">Loading account...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       {/* Profile Header */}
@@ -37,9 +138,16 @@ export default function AccountDashboard() {
           <CardTitle>Personal Information</CardTitle>
           <Button
             variant="outline"
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={() => {
+              if (isEditing) {
+                handleSave()
+              } else {
+                setIsEditing(true)
+              }
+            }}
+            disabled={isSaving}
           >
-            {isEditing ? 'Save' : 'Edit'}
+            {isSaving ? 'Saving...' : isEditing ? 'Save' : 'Edit'}
           </Button>
         </CardHeader>
         <CardContent className="p-6">
@@ -69,11 +177,8 @@ export default function AccountDashboard() {
               <Input
                 type="email"
                 value={userData.email}
-                onChange={(e) =>
-                  setUserData({ ...userData, email: e.target.value })
-                }
-                disabled={!isEditing}
-                className={isEditing ? '' : 'bg-muted border-muted'}
+                disabled
+                className="bg-muted border-muted"
               />
             </div>
 
@@ -96,86 +201,31 @@ export default function AccountDashboard() {
         </CardContent>
       </Card>
 
-      {/* Address Information */}
+      {/* Addresses */}
       <Card className="border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border">
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="w-5 h-5" />
-            Address Information
-          </CardTitle>
-          <Button
-            variant="outline"
-            onClick={() => setIsEditing(!isEditing)}
-          >
-            {isEditing ? 'Save' : 'Edit'}
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-primary" />
+            <CardTitle>Delivery Addresses</CardTitle>
+          </div>
+          <Button asChild variant="outline" className="gap-2">
+            <Link href="/account/addresses">
+              Manage
+              <ExternalLink className="w-4 h-4" />
+            </Link>
           </Button>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-            {/* Division */}
+          <div className="flex items-center justify-between">
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Division
-              </label>
-              <Input
-                value={userData.division}
-                onChange={(e) =>
-                  setUserData({ ...userData, division: e.target.value })
-                }
-                disabled={!isEditing}
-                className={isEditing ? '' : 'bg-muted border-muted'}
-              />
+              <p className="text-sm text-muted-foreground">
+                Manage your saved delivery addresses for faster checkout.
+              </p>
             </div>
-
-            {/* District */}
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                District
-              </label>
-              <Input
-                value={userData.district}
-                onChange={(e) =>
-                  setUserData({ ...userData, district: e.target.value })
-                }
-                disabled={!isEditing}
-                className={isEditing ? '' : 'bg-muted border-muted'}
-              />
+            <div className="text-right">
+              <div className="text-2xl font-bold text-primary">{stats.addresses}</div>
+              <p className="text-xs text-muted-foreground">Saved</p>
             </div>
-
-            {/* Thana */}
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Thana
-              </label>
-              <Input
-                value={userData.thana}
-                onChange={(e) =>
-                  setUserData({ ...userData, thana: e.target.value })
-                }
-                disabled={!isEditing}
-                className={isEditing ? '' : 'bg-muted border-muted'}
-              />
-            </div>
-          </div>
-
-          {/* Full Address */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Full Address
-            </label>
-            <textarea
-              value={userData.fullAddress}
-              onChange={(e) =>
-                setUserData({ ...userData, fullAddress: e.target.value })
-              }
-              disabled={!isEditing}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
-                isEditing
-                  ? 'border-border'
-                  : 'bg-muted border-muted'
-              }`}
-              rows={3}
-            />
           </div>
         </CardContent>
       </Card>
@@ -184,19 +234,19 @@ export default function AccountDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="border-border">
           <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-primary mb-1">5</div>
+            <div className="text-3xl font-bold text-primary mb-1">{stats.orders}</div>
             <p className="text-muted-foreground text-sm">Total Orders</p>
           </CardContent>
         </Card>
         <Card className="border-border">
           <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-accent mb-1">8</div>
+            <div className="text-3xl font-bold text-accent mb-1">{stats.wishlist}</div>
             <p className="text-muted-foreground text-sm">Wishlist Items</p>
           </CardContent>
         </Card>
         <Card className="border-border">
           <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-secondary mb-1">3</div>
+            <div className="text-3xl font-bold text-secondary mb-1">{stats.addresses}</div>
             <p className="text-muted-foreground text-sm">Saved Addresses</p>
           </CardContent>
         </Card>

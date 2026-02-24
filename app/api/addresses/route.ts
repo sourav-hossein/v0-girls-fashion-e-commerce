@@ -73,6 +73,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    const { division_id, district_id, thana_id } = body
+
+    if (!division_id || !district_id || !thana_id) {
+      return NextResponse.json({ message: 'Division, district, and thana are required' }, { status: 400 })
+    }
 
     const { error } = await supabase.from('user_addresses').insert([
       {

@@ -5,10 +5,7 @@ CREATE TABLE users (
   full_name TEXT,
   profile_photo_url TEXT,
   phone_number VARCHAR(20),
-  division VARCHAR(100),
-  district VARCHAR(100),
-  thana VARCHAR(100),
-  full_address TEXT,
+  role TEXT NOT NULL DEFAULT 'customer' CHECK (role IN ('customer','admin')),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -72,6 +69,23 @@ CREATE TABLE cart (
   added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_id, product_id, variant_id)
+);
+
+-- User addresses table
+CREATE TABLE user_addresses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  full_name VARCHAR(255) NOT NULL,
+  phone_number VARCHAR(20) NOT NULL,
+  division_id TEXT NOT NULL,
+  district_id TEXT NOT NULL,
+  thana_id TEXT NOT NULL,
+  area VARCHAR(255),
+  full_address TEXT NOT NULL,
+  postal_code VARCHAR(20),
+  is_default BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Wishlist table
@@ -168,6 +182,7 @@ CREATE INDEX idx_products_category ON products(category_id);
 CREATE INDEX idx_products_featured ON products(featured) WHERE featured = TRUE;
 CREATE INDEX idx_products_trending ON products(trending) WHERE trending = TRUE;
 CREATE INDEX idx_cart_user ON cart(user_id);
+CREATE INDEX idx_user_addresses_user ON user_addresses(user_id);
 CREATE INDEX idx_wishlists_user ON wishlists(user_id);
 CREATE INDEX idx_orders_user ON orders(user_id);
 CREATE INDEX idx_orders_status ON orders(status);
@@ -183,6 +198,7 @@ ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_variants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cart ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_addresses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wishlists ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;

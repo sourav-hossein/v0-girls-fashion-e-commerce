@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth'
 import { createAdminSupabaseClient } from '@/lib/supabase-admin'
 import DashboardStats from '@/components/admin-dashboard-stats'
 import RecentOrders from '@/components/admin-recent-orders'
@@ -8,6 +9,7 @@ export const metadata = {
 }
 
 export default async function AdminDashboard() {
+  await requireAdmin()
   const supabase = await createAdminSupabaseClient()
 
   // Fetch stats

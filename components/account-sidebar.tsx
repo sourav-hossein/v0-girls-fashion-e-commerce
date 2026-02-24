@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   User,
   ShoppingBag,
@@ -42,6 +42,7 @@ const menuItems = [
 
 export default function AccountSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
 
   return (
     <div className="md:col-span-1">
@@ -71,6 +72,10 @@ export default function AccountSidebar() {
         <Button
           variant="outline"
           className="w-full justify-start gap-3 text-destructive border-destructive/30 hover:bg-destructive/10 mt-4"
+          onClick={async () => {
+            await fetch('/api/auth/logout', { method: 'POST' })
+            router.push('/auth/login')
+          }}
         >
           <LogOut className="w-5 h-5" />
           <span>Logout</span>

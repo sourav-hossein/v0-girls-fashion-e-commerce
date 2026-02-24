@@ -3,7 +3,17 @@ CREATE POLICY "Users can see their own profile" ON users
   FOR SELECT USING (auth.uid() = id);
 
 CREATE POLICY "Users can update their own profile" ON users
-  FOR UPDATE USING (auth.uid() = id);
+  FOR UPDATE USING (auth.uid() = id)
+  WITH CHECK (
+    auth.uid() = id
+    AND role = (SELECT role FROM users WHERE id = auth.uid())
+  );
+
+CREATE POLICY "Users can insert their own profile" ON users
+  FOR INSERT WITH CHECK (
+    auth.uid() = id
+    AND role = 'customer'
+  );
 
 -- RLS Policies for categories table
 CREATE POLICY "Everyone can see categories" ON categories
@@ -26,6 +36,13 @@ CREATE POLICY "Users can see their own cart" ON cart
   FOR SELECT USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can manage their own cart" ON cart
+  FOR ALL USING (auth.uid() = user_id);
+
+-- RLS Policies for user_addresses table
+CREATE POLICY "Users can see their own addresses" ON user_addresses
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can manage their own addresses" ON user_addresses
   FOR ALL USING (auth.uid() = user_id);
 
 -- RLS Policies for wishlists table
