@@ -6,6 +6,7 @@ import { Product } from '@/lib/types'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 interface ProductCardProps {
   product: Product
@@ -14,6 +15,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, image }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false)
+  const [isWishlistLoading, setIsWishlistLoading] = useState(false)
   const discount = product.discount_price
     ? Math.round(((product.price - product.discount_price) / product.price) * 100)
     : 0
@@ -44,8 +46,34 @@ export default function ProductCard({ product, image }: ProductCardProps) {
           <button
             onClick={(e) => {
               e.preventDefault()
-              setIsWishlisted(!isWishlisted)
+              if (isWishlistLoading) return
+              setIsWishlistLoading(true)
+              const nextState = !isWishlisted
+              const action = nextState
+                ? fetch('/api/wishlist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_id: product.id }),
+                  })
+                : fetch(`/api/wishlist?product_id=${product.id}`, { method: 'DELETE' })
+
+              action
+                .then(async (response) => {
+                  const data = await response.json()
+                  if (!response.ok) {
+                    throw new Error(data.error || 'Wishlist update failed')
+                  }
+                  setIsWishlisted(nextState)
+                  toast.success(nextState ? 'Added to wishlist' : 'Removed from wishlist')
+                })
+                .catch((error) => {
+                  toast.error(error.message || 'Wishlist update failed')
+                })
+                .finally(() => {
+                  setIsWishlistLoading(false)
+                })
             }}
+            disabled={isWishlistLoading}
             className="absolute top-3 left-3 p-2 bg-white/90 hover:bg-primary hover:text-primary-foreground rounded-full transition-colors"
           >
             <Heart

@@ -91,7 +91,36 @@ export default function LoginPage() {
               <span className="bg-card px-2 text-muted-foreground">Or</span>
             </div>
           </div>
+<div className='flex flex-col gap-2 ' >
+              <Button
+      type="button"
+      variant="outline"
+      className="w-full"
+      >
+      <Link href="/auth/phone">Login with Phone Number</Link>
+    </Button>
 
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={isLoading}
+            onClick={async () => {
+              const origin = typeof window !== 'undefined' ? window.location.origin : ''
+              const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                  redirectTo: `${origin}/auth/callback`,
+                },
+              })
+              if (error) {
+                toast.error(error.message || 'Google sign-in failed')
+              }
+            }}
+          >
+            Continue with Google
+          </Button>
+            </div>
           <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{' '}
             <Link href="/auth/register" className="font-medium text-primary hover:underline">

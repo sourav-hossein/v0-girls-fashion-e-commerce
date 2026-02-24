@@ -67,12 +67,19 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const { product_id } = body
 
+  if (!product_id) {
+    return NextResponse.json({ error: 'Product ID is required' }, { status: 400 })
+  }
+
   const { data, error } = await supabase
     .from('wishlists')
-    .insert({
-      user_id: user.id,
-      product_id,
-    })
+    .upsert(
+      {
+        user_id: user.id,
+        product_id,
+      },
+      { onConflict: 'user_id,product_id' }
+    )
     .select()
 
   if (error) {
@@ -109,6 +116,10 @@ export async function DELETE(request: NextRequest) {
 
   const searchParams = request.nextUrl.searchParams
   const productId = searchParams.get('product_id')
+
+  if (!productId) {
+    return NextResponse.json({ error: 'Product ID is required' }, { status: 400 })
+  }
 
   const { error } = await supabase
     .from('wishlists')

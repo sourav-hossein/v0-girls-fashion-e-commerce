@@ -9,16 +9,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 
-const BANGLADESHI_DIVISIONS = [
-  'Dhaka', 'Chattogram', 'Khulna', 'Rajshahi', 'Barishal', 'Sylhet', 'Rangpur', 'Mymensingh'
-]
-
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [division, setDivision] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
@@ -30,23 +24,12 @@ export default function RegisterPage() {
       return
     }
 
-    if (!phoneNumber.startsWith('88')) {
-      toast.error('Phone number must start with 88 (Bangladesh country code)')
-      return
-    }
-
     setIsLoading(true)
 
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            phone_number: phoneNumber,
-            division: division,
-          }
-        }
       })
 
       if (error) throw error
@@ -59,24 +42,10 @@ export default function RegisterPage() {
             {
               id: data.user.id,
               email: email,
-              phone_number: phoneNumber,
-              division: division,
             }
           ])
 
         if (profileError) throw profileError
-
-        // Create user role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert([
-            {
-              user_id: data.user.id,
-              role: 'customer'
-            }
-          ])
-
-        if (roleError) throw roleError
 
         toast.success('Account created successfully! Please check your email.')
         router.push('/auth/login')
@@ -108,37 +77,6 @@ export default function RegisterPage() {
                 disabled={isLoading}
                 className="h-10"
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number (Bangladesh)</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="88017XXXXXXXX"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                required
-                disabled={isLoading}
-                className="h-10"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="division">Division</Label>
-              <select
-                id="division"
-                value={division}
-                onChange={(e) => setDivision(e.target.value)}
-                required
-                disabled={isLoading}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-foreground"
-              >
-                <option value="">Select division...</option>
-                {BANGLADESHI_DIVISIONS.map((div) => (
-                  <option key={div} value={div}>{div}</option>
-                ))}
-              </select>
             </div>
 
             <div className="space-y-2">
@@ -177,6 +115,36 @@ export default function RegisterPage() {
               {isLoading ? 'Creating account...' : 'Create Account'}
             </Button>
           </form>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Or</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={isLoading}
+            onClick={async () => {
+              const origin = typeof window !== 'undefined' ? window.location.origin : ''
+              const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                  redirectTo: `${origin}/auth/callback`,
+                },
+              })
+              if (error) {
+                toast.error(error.message || 'Google sign-in failed')
+              }
+            }}
+          >
+            Continue with Google
+          </Button>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{' '}

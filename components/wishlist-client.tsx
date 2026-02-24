@@ -9,12 +9,15 @@ import { toast } from 'sonner'
 
 interface WishlistItem {
   id: string
-  productId: string
-  productName: string
-  price: number
-  discountPrice?: number
-  image?: string
-  addedAt: string
+  product_id: string
+  added_at: string
+  product: {
+    id: string
+    name: string
+    slug: string
+    price: number
+    discount_price?: number
+  } | null
 }
 
 export default function WishlistClient() {
@@ -22,13 +25,42 @@ export default function WishlistClient() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // In a real app, fetch wishlist items from database
-    setIsLoading(false)
+    const loadWishlist = async () => {
+      try {
+        const response = await fetch('/api/wishlist')
+        if (response.status === 401) {
+          setWishlistItems([])
+          return
+        }
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load wishlist')
+        }
+        setWishlistItems(data || [])
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to load wishlist')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadWishlist()
   }, [])
 
-  const handleRemoveFromWishlist = (id: string) => {
-    setWishlistItems(wishlistItems.filter((item) => item.id !== id))
-    toast.success('Removed from wishlist')
+  const handleRemoveFromWishlist = async (productId: string) => {
+    try {
+      const response = await fetch(`/api/wishlist?product_id=${productId}`, {
+        method: 'DELETE',
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to remove from wishlist')
+      }
+      setWishlistItems((items) => items.filter((item) => item.product_id !== productId))
+      toast.success('Removed from wishlist')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to remove from wishlist')
+    }
   }
 
   const handleAddToCart = (productName: string) => {
@@ -72,8 +104,9 @@ export default function WishlistClient() {
       ) : (
         <div className="space-y-4">
           {wishlistItems.map((item) => {
-            const discount = item.discountPrice
-              ? Math.round(((item.price - item.discountPrice) / item.price) * 100)
+            if (!item.product) return null
+            const discount = item.product.discount_price
+              ? Math.round(((item.product.price - item.product.discount_price) / item.product.price) * 100)
               : 0
 
             return (
@@ -82,26 +115,26 @@ export default function WishlistClient() {
                   <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
                     {/* Product Image */}
                     <div className="w-24 h-24 bg-muted rounded-lg flex-shrink-0 flex items-center justify-center">
-                      <span className="text-3xl">🛍️</span>
+                      <span className="text-3xl">ðŸ›ï¸</span>
                     </div>
 
                     {/* Product Details */}
                     <div className="flex-1 min-w-0">
-                      <Link href={`/product/${item.productName.toLowerCase()}`}>
+                      <Link href={`/product/${item.product.slug}`}>
                         <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors truncate">
-                          {item.productName}
+                          {item.product.name}
                         </h3>
                       </Link>
-                      
+
                       {/* Pricing */}
                       <div className="flex items-baseline gap-2 mt-2">
                         <span className="text-xl font-bold text-primary">
-                          ৳{item.discountPrice || item.price}
+                          à§³{item.product.discount_price || item.product.price}
                         </span>
-                        {item.discountPrice && (
+                        {item.product.discount_price && (
                           <>
                             <span className="text-sm text-muted-foreground line-through">
-                              ৳{item.price}
+                              à§³{item.product.price}
                             </span>
                             <span className="text-sm font-bold text-accent">
                               Save {discount}%
@@ -112,21 +145,21 @@ export default function WishlistClient() {
 
                       {/* Added Date */}
                       <p className="text-xs text-muted-foreground mt-2">
-                        Added {new Date(item.addedAt).toLocaleDateString()}
+                        Added {new Date(item.added_at).toLocaleDateString()}
                       </p>
                     </div>
 
                     {/* Actions */}
                     <div className="flex gap-3 w-full sm:w-auto">
                       <Button
-                        onClick={() => handleAddToCart(item.productName)}
+                        onClick={() => handleAddToCart(item.product.name)}
                         className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
                       >
                         <ShoppingCart className="w-4 h-4" />
                         <span className="hidden sm:inline">Add to Cart</span>
                       </Button>
                       <button
-                        onClick={() => handleRemoveFromWishlist(item.id)}
+                        onClick={() => handleRemoveFromWishlist(item.product_id)}
                         className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
                         aria-label="Remove from wishlist"
                       >

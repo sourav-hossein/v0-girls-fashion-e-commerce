@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Heart, ShoppingCart, User, Menu, X, Search, Phone } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Heart, ShoppingCart, Menu, Search, Phone, User } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,6 +11,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input'
+import { ThemeLanguageToggle } from '@/components/theme-language-toggle'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,10 +19,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ThemeLanguageToggle } from '@/components/theme-language-toggle'
-
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const router = useRouter()
 
   const navItems = [
     { href: '/shop', label: 'Shop' },
@@ -41,24 +43,40 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-serif font-bold text-lg">H</span>
+              <span className="text-primary-foreground font-serif font-bold text-lg">L</span>
             </div>
             <div className="hidden sm:block">
-              <h1 className="font-serif font-bold text-lg text-foreground">Hijab & Fashion</h1>
+              <h1 className="font-serif font-bold text-lg text-foreground">Lubaba Fashion</h1>
               <p className="text-xs text-muted-foreground">Premium Fashion Accessories</p>
             </div>
           </Link>
 
           {/* Search Bar - Desktop */}
           <div className="hidden md:flex flex-1 max-w-md mx-8">
-            <div className="relative w-full">
+            <form
+              className="relative w-full"
+              onSubmit={(e) => {
+                e.preventDefault()
+                const params = new URLSearchParams()
+                if (search) params.set('search', search)
+                router.push(`/shop?${params.toString()}`)
+              }}
+            >
               <Input
                 type="search"
                 placeholder="Search accessories..."
                 className="w-full bg-background pr-10"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            </div>
+              <button
+                type="submit"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Search"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+            </form>
           </div>
 
           {/* Right Icons */}
@@ -70,7 +88,10 @@ export default function Header() {
               <ShoppingCart className="w-5 h-5 text-foreground" />
             </Link>
             <ThemeLanguageToggle />
-            <DropdownMenu>
+            <Button asChild className="hidden sm:inline-flex">
+              <Link href="/auth/login">Login</Link>
+            </Button>
+                        <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
                   <User className="w-5 h-5 text-foreground" />
@@ -88,17 +109,6 @@ export default function Header() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/auth/phone" className="cursor-pointer flex items-center gap-2">
-                    <Phone className="w-4 h-4" />
-                    Phone Login
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/auth/login" className="cursor-pointer">
-                    Email Login
-                  </Link>
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -121,6 +131,13 @@ export default function Header() {
                       {item.label}
                     </Link>
                   ))}
+                  <Link
+                    href="/auth/login"
+                    className="text-foreground hover:text-primary transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Login
+                  </Link>
                 </nav>
               </SheetContent>
             </Sheet>

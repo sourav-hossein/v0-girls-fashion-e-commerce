@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createAdminSupabaseClient } from '@/lib/supabase-admin'
 import DashboardStats from '@/components/admin-dashboard-stats'
 import RecentOrders from '@/components/admin-recent-orders'
 import LowStockProducts from '@/components/admin-low-stock'
@@ -8,7 +8,7 @@ export const metadata = {
 }
 
 export default async function AdminDashboard() {
-  const supabase = await createServerSupabaseClient()
+  const supabase = await createAdminSupabaseClient()
 
   // Fetch stats
   const [orders, products, revenue] = await Promise.all([

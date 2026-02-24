@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { Phone, ArrowRight, Lock } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 type Step = 'phone' | 'otp'
 
@@ -18,9 +19,9 @@ export function PhoneLoginClient() {
   const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
 
+
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault()
-
     if (!phone) {
       toast.error('Please enter your phone number')
       return
@@ -106,19 +107,19 @@ export function PhoneLoginClient() {
                 <label className="text-sm font-medium">Phone Number</label>
                 <div className="flex gap-2">
                   <span className="flex items-center px-3 bg-muted rounded-lg border border-input text-sm text-muted-foreground">
-                    +880
+                    +88
                   </span>
                   <Input
                     type="tel"
-                    placeholder="1712345678"
+                    placeholder="01712345678"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    maxLength="10"
+                    maxLength={11}
                     className="flex-1"
                     disabled={loading}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">Enter 10 digits (without +880)</p>
+                <p className="text-xs text-muted-foreground">Enter 11 digits (without +88)</p>
               </div>
 
               <Button
@@ -142,6 +143,26 @@ export function PhoneLoginClient() {
               <Button variant="outline" className="w-full" asChild>
                 <Link href="/auth/login">Sign In with Email</Link>
               </Button>
+              <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full"
+                          disabled={loading}
+                          onClick={async () => {
+                            const origin = typeof window !== 'undefined' ? window.location.origin : ''
+                            const { error } = await supabase.auth.signInWithOAuth({
+                              provider: 'google',
+                              options: {
+                                redirectTo: `${origin}/auth/callback`,
+                              },
+                            })
+                            if (error) {
+                              toast.error(error.message || 'Google sign-in failed')
+                            }
+                          }}
+                        >
+                          Continue with Google
+                        </Button>
             </form>
           ) : (
             <form onSubmit={handleVerifyOTP} className="space-y-4">
@@ -158,7 +179,7 @@ export function PhoneLoginClient() {
                   placeholder="000000"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  maxLength="6"
+                  maxLength={6}
                   className="text-center text-2xl tracking-widest font-mono"
                   disabled={loading}
                 />

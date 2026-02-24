@@ -1,10 +1,9 @@
--- Create roles enum
-CREATE TYPE user_role AS ENUM ('customer', 'admin');
-
 -- Users table with profile info
 CREATE TABLE users (
   id UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
   email VARCHAR(255) UNIQUE NOT NULL,
+  full_name TEXT,
+  profile_photo_url TEXT,
   phone_number VARCHAR(20),
   division VARCHAR(100),
   district VARCHAR(100),
@@ -12,15 +11,6 @@ CREATE TABLE users (
   full_address TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- User roles table
-CREATE TABLE user_roles (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  role user_role NOT NULL DEFAULT 'customer',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(user_id, role)
 );
 
 -- Categories table
@@ -186,9 +176,8 @@ CREATE INDEX idx_reviews_product ON reviews(product_id);
 CREATE INDEX idx_reviews_user ON reviews(user_id);
 CREATE INDEX idx_payment_logs_order ON payment_logs(order_id);
 
--- Enable RLS
+-- Enable RLSF
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_images ENABLE ROW LEVEL SECURITY;

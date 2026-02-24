@@ -10,7 +10,7 @@ A modern, mobile-first e-commerce website for selling girls fashion accessories 
   - Phone-based OTP authentication (Bangladesh format)
 - **User Profiles** with editable information
 - **Multiple Address Management** with default address selection
-- **Role-based Access Control** (Admin/Customer)
+- **Admin Access** with environment password
 - **Automatic Phone Verification**
 
 ### Customer Features
@@ -65,7 +65,7 @@ A modern, mobile-first e-commerce website for selling girls fashion accessories 
   - Order status workflow (Pending → Confirmed → Shipped → Delivered)
   - Customer information and tracking
   - Payment status monitoring
-- **Admin-only Routes** with role-based protection
+- **Admin-only Routes** with password protection
 
 ### Internationalization & Localization
 - **Dual Language Support**:
@@ -89,7 +89,7 @@ A modern, mobile-first e-commerce website for selling girls fashion accessories 
 ### Database & Security
 - **14 Production Tables** with proper relationships
 - **Row Level Security (RLS)** for data protection
-- **User Role Management** system
+- **Password-protected Admin Panel**
 - **Order and Payment Tracking** with transaction logs
 - **Phone Verification** table with OTP management
 - **Address Management** with multiple saved locations
@@ -161,7 +161,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Core Tables
 - **users**: User profiles with address information
-- **user_roles**: Role assignment (customer/admin)
 - **categories**: Product categories
 - **products**: Product listings with pricing
 - **product_images**: Multiple images per product
@@ -177,7 +176,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Security
 - **Row Level Security (RLS)** enabled on all tables
-- **Role-based access control** for admin features
+- **Admin access control** via environment password
 - **Secure password hashing** with bcrypt
 - **Protected API routes** with authentication checks
 
@@ -214,14 +213,7 @@ The platform integrates with SSLCommerz for secure payments in Bangladesh.
 
 ## Admin Access
 
-To create an admin user:
-1. Register a new account normally
-2. Go to your Supabase dashboard
-3. In the `user_roles` table, add a role entry with:
-   - `user_id`: The user's ID
-   - `role`: Set to `'admin'`
-
-Admin users can then access `/admin` routes.
+Set `ADMIN_PASSWORD` in your environment. Visit `/admin/login` and enter the password to access admin routes.
 
 ## Deployment
 

@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createAdminSupabaseClient } from '@/lib/supabase-admin'
 import AdminProductsList from '@/components/admin-products-list'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -9,7 +9,7 @@ export const metadata = {
 }
 
 export default async function AdminProductsPage() {
-  const supabase = await createServerSupabaseClient()
+  const supabase = await createAdminSupabaseClient()
 
   const { data: products } = await supabase
     .from('products')

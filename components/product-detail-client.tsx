@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Heart, ShoppingCart, Star, Truck, RefreshCw } from 'lucide-react'
@@ -31,6 +31,7 @@ export default function ProductDetailClient({
   const [selectedSize, setSelectedSize] = useState<string>('')
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isWishlistLoading, setIsWishlistLoading] = useState(true)
 
   const mainImage = images.find(img => img.is_main) || images[0]
   const discount = product.discount_price
@@ -39,6 +40,29 @@ export default function ProductDetailClient({
 
   const colorVariants = variants.filter(v => v.variant_type === 'color')
   const sizeVariants = variants.filter(v => v.variant_type === 'size')
+
+  useEffect(() => {
+    const loadWishlistState = async () => {
+      try {
+        const response = await fetch('/api/wishlist')
+        if (response.status === 401) {
+          setIsWishlisted(false)
+          return
+        }
+        const data = await response.json()
+        if (response.ok && Array.isArray(data)) {
+          const exists = data.some((item: { product_id: string }) => item.product_id === product.id)
+          setIsWishlisted(exists)
+        }
+      } catch {
+        setIsWishlisted(false)
+      } finally {
+        setIsWishlistLoading(false)
+      }
+    }
+
+    loadWishlistState()
+  }, [product.id])
 
   const handleAddToCart = async () => {
     setIsLoading(true)
@@ -52,9 +76,36 @@ export default function ProductDetailClient({
     }
   }
 
-  const handleAddToWishlist = () => {
-    setIsWishlisted(!isWishlisted)
-    toast.success(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist')
+  const handleAddToWishlist = async () => {
+    if (isWishlistLoading) return
+    try {
+      if (isWishlisted) {
+        const response = await fetch(`/api/wishlist?product_id=${product.id}`, {
+          method: 'DELETE',
+        })
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to remove from wishlist')
+        }
+        setIsWishlisted(false)
+        toast.success('Removed from wishlist')
+        return
+      }
+
+      const response = await fetch('/api/wishlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_id: product.id }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add to wishlist')
+      }
+      setIsWishlisted(true)
+      toast.success('Added to wishlist')
+    } catch (error: any) {
+      toast.error(error.message || 'Wishlist action failed')
+    }
   }
 
   const averageRating = reviews.length > 0
@@ -222,6 +273,7 @@ export default function ProductDetailClient({
             <Button
               onClick={handleAddToWishlist}
               variant="outline"
+              disabled={isWishlistLoading}
               className="px-6 h-12 border-border"
             >
               <Heart

@@ -74,11 +74,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: 'Failed to create profile' }, { status: 500 })
       }
 
-      // Create user role
-      await supabase.from('user_roles').insert({
-        user_id: authUser.user.id,
-        role: 'customer',
-      })
     } else {
       // Update last_login and phone_verified
       await supabase

@@ -19,6 +19,7 @@ export function ThemeLanguageToggle() {
   const { language, setLanguage } = useLanguage()
 
   return (
+    <div className="flex items-center gap-2">
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon">
@@ -32,38 +33,47 @@ export function ThemeLanguageToggle() {
         <DropdownMenuCheckboxItem
           checked={theme === 'light'}
           onCheckedChange={() => setTheme('light')}
-        >
+          >
           Light
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={theme === 'dark'}
           onCheckedChange={() => setTheme('dark')}
-        >
+          >
           Dark
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={theme === 'system'}
           onCheckedChange={() => setTheme('system')}
-        >
+          >
           System
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuSeparator />
+        </DropdownMenuCheckboxItem> 
+      </DropdownMenuContent>
+    </DropdownMenu>
+        <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon">
+          <Globe className="w-4 h-4" />
+          <span className="sr-only">Language Settings</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">        
         <DropdownMenuLabel className="text-xs uppercase font-semibold text-muted-foreground">Language</DropdownMenuLabel>
         <DropdownMenuCheckboxItem
           checked={language === 'en'}
           onCheckedChange={() => setLanguage('en')}
           className="flex items-center gap-2"
-        >
-          <Globe className="w-4 h-4" />
+          >
           English
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={language === 'bn'}
           onCheckedChange={() => setLanguage('bn')}
-        >
+          >
           বাংলা (Bengali)
         </DropdownMenuCheckboxItem>
       </DropdownMenuContent>
     </DropdownMenu>
+          </div>
   )
 }

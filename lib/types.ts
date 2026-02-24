@@ -1,8 +1,8 @@
-export type UserRole = 'customer' | 'admin'
-
 export interface User {
   id: string
   email: string
+  full_name?: string
+  profile_photo_url?: string
   phone_number?: string
   division?: string
   district?: string

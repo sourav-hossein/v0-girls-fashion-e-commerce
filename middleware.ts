@@ -29,20 +29,15 @@ export async function middleware(request: NextRequest) {
 
   // Protect admin routes
   if (request.nextUrl.pathname.startsWith('/admin')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
-    }
+    if (!request.nextUrl.pathname.startsWith('/admin/login')) {
+      const adminPassword = process.env.ADMIN_PASSWORD || ''
+      const adminCookie = request.cookies.get('admin_auth')?.value || ''
 
-    // Check if user is admin
-    const { data: userRole } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .single()
-
-    if (!userRole) {
-      return NextResponse.redirect(new URL('/', request.url))
+      if (!adminPassword || adminCookie !== adminPassword) {
+        const loginUrl = new URL('/admin/login', request.url)
+        loginUrl.searchParams.set('next', request.nextUrl.pathname)
+        return NextResponse.redirect(loginUrl)
+      }
     }
   }
 
