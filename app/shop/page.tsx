@@ -3,6 +3,7 @@ import Header from '@/components/header'
 import Footer from '@/components/footer'
 import ShopClient from '@/components/shop-client'
 import { Category } from '@/lib/types'
+import { getCachedCategories } from '@/lib/categories'
 
 interface ShopPageProps {
   searchParams: Promise<{
@@ -25,10 +26,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const supabase = await createServerSupabaseClient()
 
   // Fetch all categories
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('*')
-    .order('name')
+  const categories = await getCachedCategories()
 
   // Fetch all products with pagination
   let query = supabase

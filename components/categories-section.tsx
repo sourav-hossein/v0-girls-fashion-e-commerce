@@ -7,14 +7,21 @@ interface CategoriesSectionProps {
 }
 
 const defaultCategories = [
-  { id: '1', name: 'Earrings', slug: 'earrings', icon: '💎' },
-  { id: '2', name: 'Hijabs', slug: 'hijabs', icon: '🧕' },
-  { id: '3', name: 'Handbags', slug: 'bags', icon: '👜' },
-  { id: '4', name: 'Hair Clips', slug: 'hair-clips', icon: '✨' },
-  { id: '5', name: 'Rings', slug: 'rings', icon: '💍' },
-  { id: '6', name: 'Bracelets', slug: 'bracelets', icon: '⌚' },
-  { id: '7', name: 'Combo Offers', slug: 'combos', icon: '🎁' },
-  { id: '8', name: 'New Arrivals', slug: 'new', icon: '⭐' },
+
+
+
+{id: 1, name: 'Combo Offers', slug: 'combo-offers', description: 'Special bundle deals for great value', image_url: 'https://images.unsplash.com/photo-1599643478500-0df5b4d1e5d9?w=500&h=500&fit=crop'},
+
+{id: 2, name: 'Earrings', slug: 'earrings', description: 'Beautiful and elegant earrings for every occasion', image_url: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500&h=500&fit=crop'},
+
+{id:3, name: 'Hair Accessories', slug: 'hair-accessories', description: 'Trendy hair clips, pins, and accessories', image_url: 'https://images.unsplash.com/photo-1599643478169-fc1c0df1820f?w=500&h=500&fit=crop'},
+
+{id: 4, name: 'Handbags', slug: 'handbags', description: 'Stylish and practical handbags for daily use', image_url: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&h=500&fit=crop'},
+
+{id: 5, name: 'Hijabs', slug: 'hijabs', description: 'Premium quality hijabs in various styles and colors', image_url: 'https://images.unsplash.com/photo-1505252585461-04db1c2a2e5d?w=500&h=500&fit=crop'},
+
+{id: 6, name: 'Rings', slug: 'rings', description: 'Elegant rings for every style and occasion', image_url: 'https://images.unsplash.com/photo-1599643478511-b0d5eb73b4d5?w=500&h=500&fit=crop'}
+
 ]
 
 export default function CategoriesSection({ categories }: CategoriesSectionProps) {
@@ -40,8 +47,12 @@ export default function CategoriesSection({ categories }: CategoriesSectionProps
             >
               <Card className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 h-full group overflow-hidden">
                 <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-3 h-full">
-                  <div className="text-4xl group-hover:scale-110 transition-transform duration-300">
-                    {categories.length > 0 ? '🛍️' : (displayCategories.find(c => c.slug === category.slug) as any)?.icon || '✨'}
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden">
+                    <img
+                      src={category.image_url || 'https://via.placeholder.com/150'}
+                      alt={category.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground text-sm sm:text-base group-hover:text-primary transition-colors">

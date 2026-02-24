@@ -6,6 +6,7 @@ import CategoriesSection from '@/components/categories-section'
 import TrendingProducts from '@/components/trending-products'
 import Newsletter from '@/components/newsletter'
 import Footer from '@/components/footer'
+import { getCachedCategories } from '@/lib/categories'
 
 export const revalidate = 60 // revalidate every 60 seconds
 
@@ -27,10 +28,8 @@ export default async function Home() {
     .limit(8)
 
   // Fetch categories
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('*')
-    .limit(8)
+  const categories = await getCachedCategories()
+  console.log('Fetched categories:', categories)
 
   return (
     <main className="bg-background">
