@@ -67,10 +67,9 @@ export async function GET(request: NextRequest) {
     user.user_metadata?.avatar_url ||
     null
 
-  await adminClient.from('users').upsert(
+  await adminClient.from('profiles').upsert(
     {
       id: user.id,
-      email: user.email,
       full_name: fullName,
       profile_photo_url: profilePhotoUrl,
     },

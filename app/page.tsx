@@ -18,6 +18,7 @@ export default async function Home() {
     .from('products')
     .select('*')
     .eq('featured', true)
+    .is('deleted_at', null)
     .limit(8)
 
   // Fetch trending products
@@ -25,6 +26,7 @@ export default async function Home() {
     .from('products')
     .select('*')
     .eq('trending', true)
+    .is('deleted_at', null)
     .limit(8)
 
   // Fetch categories

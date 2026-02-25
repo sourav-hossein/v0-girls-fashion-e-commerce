@@ -1,9 +1,10 @@
-export interface User {
+export interface Profile {
   id: string
-  email: string
   full_name?: string
   profile_photo_url?: string
   phone_number?: string
+  phone_verified?: boolean
+  last_login?: string
   role?: 'customer' | 'admin'
   created_at: string
   updated_at: string
@@ -79,7 +80,7 @@ export interface Order {
   delivery_charge: number
   discount_amount?: number
   total_amount: number
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered'
+  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'failed'
   payment_method: 'sslcommerz' | 'cod'
   payment_status: 'pending' | 'completed' | 'failed'
   notes?: string

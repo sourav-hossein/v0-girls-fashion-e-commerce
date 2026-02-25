@@ -37,11 +37,10 @@ export default function RegisterPage() {
       if (data.user) {
         // Create user profile
         const { error: profileError } = await supabase
-          .from('users')
+          .from('profiles')
           .insert([
             {
               id: data.user.id,
-              email: email,
             }
           ])
 

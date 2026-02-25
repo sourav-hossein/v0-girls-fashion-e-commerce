@@ -28,6 +28,12 @@ export async function sendOTP(phoneNumber: string): Promise<{ success: boolean; 
     )
 
     const otp = await generateOTP()
+    const { data: otpHash, error: hashError } = await supabase.rpc('hash_otp', { otp })
+
+    if (hashError || !otpHash) {
+      console.error('Error hashing OTP:', hashError)
+      return { success: false, message: 'Failed to send OTP' }
+    }
 
     // Store OTP in database
     const { error } = await supabase
@@ -35,7 +41,7 @@ export async function sendOTP(phoneNumber: string): Promise<{ success: boolean; 
       .upsert(
         {
           phone_number: phoneNumber,
-          otp_code: otp,
+          otp_hash: otpHash,
           is_verified: false,
           attempts: 0,
           expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
@@ -87,43 +93,19 @@ export async function verifyOTP(
       }
     )
 
-    // Get the stored OTP
-    const { data, error } = await supabase
-      .from('phone_verifications')
-      .select('*')
-      .eq('phone_number', phoneNumber)
-      .single()
+    const { data, error } = await supabase.rpc('verify_phone_otp', {
+      phone: phoneNumber,
+      otp,
+    })
 
-    if (error || !data) {
-      return { success: false, message: 'OTP not found or expired' }
+    if (error) {
+      console.error('Error verifying OTP:', error)
+      return { success: false, message: 'Verification failed' }
     }
 
-    // Check if OTP is expired
-    if (new Date() > new Date(data.expires_at)) {
-      return { success: false, message: 'OTP has expired' }
+    if (!data) {
+      return { success: false, message: 'Invalid or expired OTP' }
     }
-
-    // Check if too many attempts
-    if (data.attempts >= 3) {
-      return { success: false, message: 'Too many attempts. Please request a new OTP' }
-    }
-
-    // Verify OTP
-    if (data.otp_code !== otp) {
-      // Increment attempts
-      await supabase
-        .from('phone_verifications')
-        .update({ attempts: data.attempts + 1 })
-        .eq('phone_number', phoneNumber)
-
-      return { success: false, message: 'Invalid OTP' }
-    }
-
-    // Mark as verified
-    await supabase
-      .from('phone_verifications')
-      .update({ is_verified: true })
-      .eq('phone_number', phoneNumber)
 
     return { success: true, message: 'OTP verified successfully', verified: true }
   } catch (error) {

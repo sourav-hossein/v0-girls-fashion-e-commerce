@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Heart, ShoppingCart, Star, Truck, RefreshCw } from 'lucide-react'
 import { Product, ProductImage, ProductVariant, Review } from '@/lib/types'
 import { Button } from '@/components/ui/button'
@@ -10,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import ProductCard from './product-card'
+import { addToCart, CartAuthError } from '@/lib/cart-api'
 
 interface ProductDetailClientProps {
   product: Product
@@ -26,6 +26,7 @@ export default function ProductDetailClient({
   reviews,
   relatedProducts,
 }: ProductDetailClientProps) {
+  const router = useRouter()
   const [quantity, setQuantity] = useState(1)
   const [selectedColor, setSelectedColor] = useState<string>('')
   const [selectedSize, setSelectedSize] = useState<string>('')
@@ -40,6 +41,16 @@ export default function ProductDetailClient({
 
   const colorVariants = variants.filter(v => v.variant_type === 'color')
   const sizeVariants = variants.filter(v => v.variant_type === 'size')
+  const hasColorVariants = colorVariants.length > 0
+  const hasSizeVariants = sizeVariants.length > 0
+
+  const selectedVariant = hasColorVariants
+    ? colorVariants.find(v => v.variant_value === selectedColor)
+    : hasSizeVariants
+    ? sizeVariants.find(v => v.variant_value === selectedSize)
+    : undefined
+
+  const availableStock = selectedVariant?.stock_quantity ?? product.stock_quantity
 
   useEffect(() => {
     const loadWishlistState = async () => {
@@ -65,12 +76,30 @@ export default function ProductDetailClient({
   }, [product.id])
 
   const handleAddToCart = async () => {
+    if (hasColorVariants && !selectedColor) {
+      toast.error('Please select a color')
+      return
+    }
+    if (hasSizeVariants && !selectedSize) {
+      toast.error('Please select a size')
+      return
+    }
+
     setIsLoading(true)
     try {
-      // Cart functionality will be implemented with proper auth
+      await addToCart({
+        productId: product.id,
+        variantId: selectedVariant?.id ?? null,
+        quantity,
+      })
       toast.success('Added to cart!')
     } catch (error) {
-      toast.error('Failed to add to cart')
+      if (error instanceof CartAuthError) {
+        toast.error(error.message)
+        router.push('/auth/login')
+        return
+      }
+      toast.error(error instanceof Error ? error.message : 'Failed to add to cart')
     } finally {
       setIsLoading(false)
     }
@@ -118,7 +147,7 @@ export default function ProductDetailClient({
         {/* Images */}
         <div className="space-y-4">
           <div className="aspect-square bg-muted rounded-2xl overflow-hidden flex items-center justify-center">
-            <div className="text-6xl">🛍️</div>
+            <div className="text-6xl">ðŸ›ï¸</div>
           </div>
           {images.length > 1 && (
             <div className="grid grid-cols-4 gap-3">
@@ -127,7 +156,7 @@ export default function ProductDetailClient({
                   key={idx}
                   className="aspect-square bg-muted rounded-lg overflow-hidden cursor-pointer hover:border-primary border-2 border-transparent transition-colors flex items-center justify-center"
                 >
-                  <span className="text-2xl">📷</span>
+                  <span className="text-2xl">ðŸ“·</span>
                 </div>
               ))}
             </div>
@@ -171,12 +200,12 @@ export default function ProductDetailClient({
           <div className="space-y-2">
             <div className="flex items-baseline gap-3">
               <span className="text-4xl font-bold text-primary">
-                ৳{product.discount_price || product.price}
+                à§³{product.discount_price || product.price}
               </span>
               {product.discount_price && (
                 <>
                   <span className="text-xl text-muted-foreground line-through">
-                    ৳{product.price}
+                    à§³{product.price}
                   </span>
                   <span className="text-lg font-bold text-accent">
                     Save {discount}%
@@ -185,12 +214,12 @@ export default function ProductDetailClient({
               )}
             </div>
             <p className={`text-sm font-semibold ${
-              product.stock_quantity > 0
+              availableStock > 0
                 ? 'text-green-600 dark:text-green-400'
                 : 'text-red-600 dark:text-red-400'
             }`}>
-              {product.stock_quantity > 0
-                ? `${product.stock_quantity} in stock`
+              {availableStock > 0
+                ? `${availableStock} in stock`
                 : 'Out of stock'}
             </p>
           </div>
@@ -246,12 +275,12 @@ export default function ProductDetailClient({
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 className="px-4 py-2 hover:bg-muted transition-colors"
               >
-                −
+                âˆ’
               </button>
               <span className="px-4 py-2 font-semibold">{quantity}</span>
               <button
                 onClick={() =>
-                  setQuantity(Math.min(product.stock_quantity, quantity + 1))
+                  setQuantity(Math.min(Math.max(availableStock, 1), quantity + 1))
                 }
                 className="px-4 py-2 hover:bg-muted transition-colors"
               >
@@ -264,7 +293,7 @@ export default function ProductDetailClient({
           <div className="flex gap-3 pt-4">
             <Button
               onClick={handleAddToCart}
-              disabled={product.stock_quantity === 0 || isLoading}
+              disabled={availableStock === 0 || isLoading}
               className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground gap-2 h-12"
             >
               <ShoppingCart className="w-5 h-5" />
@@ -330,7 +359,7 @@ export default function ProductDetailClient({
             <div>
               <h4 className="font-semibold text-foreground mb-2">Stock</h4>
               <p className="text-sm text-muted-foreground">
-                {product.stock_quantity} units available
+                {availableStock} units available
               </p>
             </div>
           </div>

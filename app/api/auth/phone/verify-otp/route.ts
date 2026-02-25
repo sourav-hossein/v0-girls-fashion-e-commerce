@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
 
     // Check if user exists with this phone
     let user = await supabase
-      .from('users')
-      .select('id, email')
+      .from('profiles')
+      .select('id')
       .eq('phone_number', formatted)
       .single()
 
@@ -62,9 +62,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Create profile
-      const { error: profileError } = await supabase.from('users').insert({
+      const { error: profileError } = await supabase.from('profiles').insert({
         id: authUser.user.id,
-        email: authUser.user.email,
         phone_number: formatted,
         phone_verified: true,
       })
@@ -77,7 +76,7 @@ export async function POST(request: NextRequest) {
     } else {
       // Update last_login and phone_verified
       await supabase
-        .from('users')
+        .from('profiles')
         .update({
           phone_verified: true,
           last_login: new Date().toISOString(),
@@ -87,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     // Set session
     const { data, error } = await supabase.auth.admin.createSession(
-      user.data?.id || (await supabase.from('users').select('id').eq('phone_number', formatted).single()).data.id
+      user.data?.id || (await supabase.from('profiles').select('id').eq('phone_number', formatted).single()).data.id
     )
 
     if (error) {

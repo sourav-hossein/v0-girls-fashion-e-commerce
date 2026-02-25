@@ -73,19 +73,29 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (order?.id) {
-      await supabase
-        .from('payment_logs')
-        .update({
-          status: 'completed',
-          transaction_id: val_id,
-          gateway_response: validationData,
-        })
-        .eq('order_id', order.id)
+      const { error: finalizeError } = await supabase.rpc('finalize_paid_order', {
+        p_order_id: order.id,
+        p_transaction_id: val_id,
+        p_gateway_response: validationData,
+      })
 
-      await supabase
-        .from('orders')
-        .update({ payment_status: 'completed', status: 'confirmed' })
-        .eq('id', order.id)
+      if (finalizeError) {
+        await supabase
+          .from('payment_logs')
+          .update({
+            status: 'failed',
+            transaction_id: val_id,
+            gateway_response: validationData,
+          })
+          .eq('order_id', order.id)
+
+        await supabase
+          .from('orders')
+          .update({ payment_status: 'failed', status: 'failed' })
+          .eq('id', order.id)
+
+        return NextResponse.json({ error: 'Order fulfillment failed' }, { status: 409 })
+      }
     }
 
     return NextResponse.json({ success: true, message: 'Payment processed' })

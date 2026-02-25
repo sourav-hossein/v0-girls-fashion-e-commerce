@@ -32,6 +32,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   let query = supabase
     .from('products')
     .select('*', { count: 'exact' })
+    .is('deleted_at', null)
 
   // Apply filters
   if (params.category) {

@@ -35,8 +35,8 @@ export default function AccountDashboard() {
         }
 
         const { data: profile, error: profileError } = await supabase
-          .from('users')
-          .select('id, full_name, email, phone_number')
+          .from('profiles')
+          .select('id, full_name, phone_number')
           .eq('id', authData.user.id)
           .single()
 
@@ -44,7 +44,7 @@ export default function AccountDashboard() {
           setUserData({
             id: profile.id,
             fullName: profile.full_name || '',
-            email: profile.email || authData.user.email || '',
+            email: authData.user.email || '',
             phoneNumber: profile.phone_number || '',
           })
         } else {
@@ -92,7 +92,7 @@ export default function AccountDashboard() {
     try {
       const supabase = createClient()
       const { error } = await supabase
-        .from('users')
+        .from('profiles')
         .update({
           full_name: userData.fullName,
           phone_number: userData.phoneNumber,

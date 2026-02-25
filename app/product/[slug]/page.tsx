@@ -21,6 +21,7 @@ export async function generateMetadata(
     .from('products')
     .select('*')
     .eq('slug', slug)
+    .is('deleted_at', null)
     .single()
 
   if (!product) {
@@ -44,6 +45,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     .from('products')
     .select('*')
     .eq('slug', slug)
+    .is('deleted_at', null)
     .single()
 
   if (!product) {
@@ -76,6 +78,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     .select('*')
     .eq('category_id', product.category_id)
     .neq('id', product.id)
+    .is('deleted_at', null)
     .limit(4)
 
   return (

@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Heart, ShoppingCart, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
+import { addToCart, CartAuthError } from '@/lib/cart-api'
 
 interface WishlistItem {
   id: string
@@ -21,6 +23,7 @@ interface WishlistItem {
 }
 
 export default function WishlistClient() {
+  const router = useRouter()
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -63,8 +66,18 @@ export default function WishlistClient() {
     }
   }
 
-  const handleAddToCart = (productName: string) => {
-    toast.success(`Added ${productName} to cart!`)
+  const handleAddToCart = async (productId: string, productName: string) => {
+    try {
+      await addToCart({ productId, quantity: 1 })
+      toast.success(`Added ${productName} to cart!`)
+    } catch (error) {
+      if (error instanceof CartAuthError) {
+        toast.error(error.message)
+        router.push('/auth/login')
+        return
+      }
+      toast.error(error instanceof Error ? error.message : 'Failed to add to cart')
+    }
   }
 
   if (isLoading) {
@@ -152,7 +165,7 @@ export default function WishlistClient() {
                     {/* Actions */}
                     <div className="flex gap-3 w-full sm:w-auto">
                       <Button
-                        onClick={() => handleAddToCart(item.product.name)}
+                        onClick={() => handleAddToCart(item.product.id, item.product.name)}
                         className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
                       >
                         <ShoppingCart className="w-4 h-4" />
