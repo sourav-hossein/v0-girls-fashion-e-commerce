@@ -114,7 +114,7 @@ export async function verifyOTP(
   }
 }
 
-export async function formatBangladeshiPhone(phone: string): string {
+export  function formatBangladeshiPhone(phone: string): string {
   // Remove all non-digit characters
   const cleaned = phone.replace(/\D/g, '')
 
@@ -140,8 +140,8 @@ export const BANGLADESHI_CARRIERS = {
   'Citycell': ['012'],
 }
 
-export function validateBangladeshiPhone(phone: string): boolean {
-  const formatted = formatBangladeshiPhone(phone)
+export  function validateBangladeshiPhone(phone: string): boolean {
+  const formatted =  formatBangladeshiPhone(phone)
 
   // Must be 11 digits starting with 0
   if (!/^0\d{10}$/.test(formatted)) {

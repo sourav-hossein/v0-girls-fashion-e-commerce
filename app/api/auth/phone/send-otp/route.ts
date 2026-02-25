@@ -8,9 +8,8 @@ export async function POST(request: NextRequest) {
     if (!phone) {
       return NextResponse.json({ message: 'Phone number is required' }, { status: 400 })
     }
-
     const formatted = formatBangladeshiPhone(phone)
-
+    console.log('Formatted phone number:', formatted) // Debug log
     if (!validateBangladeshiPhone(formatted)) {
       return NextResponse.json(
         { message: 'Invalid Bangladesh phone number' },

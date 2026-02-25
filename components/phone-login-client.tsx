@@ -111,7 +111,7 @@ export function PhoneLoginClient() {
                   </span>
                   <Input
                     type="tel"
-                    placeholder="01712345678"
+                    placeholder="01*******78"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     maxLength={11}

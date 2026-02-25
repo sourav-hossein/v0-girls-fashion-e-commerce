@@ -10,20 +10,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Lock, CheckCircle } from 'lucide-react'
-
-const DIVISIONS = [
-  'Dhaka',
-  'Chittagong',
-  'Khulna',
-  'Rajshahi',
-  'Barisal',
-  'Sylhet',
-  'Rangpur',
-  'Mymensingh',
-]
+import {
+  divisions,
+  districtsByDivisionId,
+  thanasByDistrictId,
+  getDivisionName,
+  getDistrictName,
+  getThanaName,
+} from '@/lib/geo-data'
 
 const DELIVERY_CHARGE_INSIDE_DHAKA = 60
 const DELIVERY_CHARGE_OUTSIDE_DHAKA = 120
+
+interface UserAddress {
+  id: string
+  full_name: string
+  phone_number: string
+  division_id: string
+  district_id: string
+  thana_id: string
+  area?: string
+  full_address: string
+  postal_code?: string
+  is_default: boolean
+}
 
 export default function CheckoutClient() {
   const router = useRouter()
@@ -32,16 +42,21 @@ export default function CheckoutClient() {
   const [orderPlaced, setOrderPlaced] = useState(false)
   const [cartItems, setCartItems] = useState<any[]>([])
   const [cartLoading, setCartLoading] = useState(true)
+  const [addressesLoading, setAddressesLoading] = useState(true)
+  const [addresses, setAddresses] = useState<UserAddress[]>([])
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
 
   // Form states
   const [formData, setFormData] = useState({
     fullName: '',
     phoneNumber: '',
     email: '',
-    division: '',
-    district: '',
-    thana: '',
+    divisionId: '',
+    districtId: '',
+    thanaId: '',
+    area: '',
     fullAddress: '',
+    postalCode: '',
   })
 
   useEffect(() => {
@@ -63,19 +78,78 @@ export default function CheckoutClient() {
     loadCart()
   }, [])
 
+  useEffect(() => {
+    const loadAddresses = async () => {
+      try {
+        const response = await fetch('/api/addresses', { credentials: 'include' })
+        if (response.status === 401) {
+          setAddresses([])
+          setSelectedAddressId(null)
+          return
+        }
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data?.message || 'Failed to load addresses')
+        }
+
+        const list = data || []
+        setAddresses(list)
+
+        const defaultAddress = list.find((addr: UserAddress) => addr.is_default)
+        if (defaultAddress) {
+          setSelectedAddressId(defaultAddress.id)
+        } else if (list.length > 0) {
+          setSelectedAddressId(list[0].id)
+        }
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Failed to load addresses')
+      } finally {
+        setAddressesLoading(false)
+      }
+    }
+
+    loadAddresses()
+  }, [])
+
+  useEffect(() => {
+    if (!selectedAddressId) return
+    const selected = addresses.find((addr) => addr.id === selectedAddressId)
+    if (!selected) return
+    setFormData((prev) => ({
+      ...prev,
+      fullName: selected.full_name,
+      phoneNumber: selected.phone_number,
+      divisionId: selected.division_id,
+      districtId: selected.district_id,
+      thanaId: selected.thana_id,
+      area: selected.area || '',
+      fullAddress: selected.full_address,
+      postalCode: selected.postal_code || '',
+    }))
+  }, [selectedAddressId, addresses])
+
   const subtotal = cartItems.reduce((sum, item) => {
     const price = item.product?.discount_price ?? item.product?.price ?? 0
     return sum + price * (item.quantity || 1)
   }, 0)
-  const deliveryCharge = formData.division ? (
-    formData.division === 'Dhaka'
+  const selectedDivisionName = formData.divisionId ? getDivisionName(formData.divisionId) : ''
+  const deliveryCharge = selectedDivisionName ? (
+    selectedDivisionName === 'Dhaka'
       ? DELIVERY_CHARGE_INSIDE_DHAKA
       : DELIVERY_CHARGE_OUTSIDE_DHAKA
   ) : 0
   const total = subtotal + deliveryCharge
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    setFormData((prev) => {
+      if (field === 'divisionId') {
+        return { ...prev, divisionId: value, districtId: '', thanaId: '' }
+      }
+      if (field === 'districtId') {
+        return { ...prev, districtId: value, thanaId: '' }
+      }
+      return { ...prev, [field]: value }
+    })
   }
 
   const validateForm = () => {
@@ -83,9 +157,9 @@ export default function CheckoutClient() {
       !formData.fullName ||
       !formData.phoneNumber ||
       !formData.email ||
-      !formData.division ||
-      !formData.district ||
-      !formData.thana ||
+      !formData.divisionId ||
+      !formData.districtId ||
+      !formData.thanaId ||
       !formData.fullAddress
     ) {
       toast.error('Please fill in all fields')
@@ -112,18 +186,105 @@ export default function CheckoutClient() {
     return true
   }
 
+  const isFormDifferent = (address: UserAddress) => {
+    return (
+      address.full_name !== formData.fullName ||
+      address.phone_number !== formData.phoneNumber ||
+      address.division_id !== formData.divisionId ||
+      address.district_id !== formData.districtId ||
+      address.thana_id !== formData.thanaId ||
+      (address.area || '') !== (formData.area || '') ||
+      address.full_address !== formData.fullAddress ||
+      (address.postal_code || '') !== (formData.postalCode || '')
+    )
+  }
+
+  const buildAddressPayload = () => ({
+    full_name: formData.fullName,
+    phone_number: formData.phoneNumber,
+    division_id: formData.divisionId,
+    district_id: formData.districtId,
+    thana_id: formData.thanaId,
+    area: formData.area || null,
+    full_address: formData.fullAddress,
+    postal_code: formData.postalCode || null,
+  })
+
+  const ensureAddressSaved = async () => {
+    if (!validateForm()) return false
+
+    const payload = buildAddressPayload()
+    const selected = selectedAddressId
+      ? addresses.find((addr) => addr.id === selectedAddressId)
+      : null
+
+    if (selected) {
+      if (!isFormDifferent(selected)) return true
+      const response = await fetch('/api/addresses', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ id: selected.id, ...payload }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        toast.error(data?.message || 'Failed to update address')
+        return false
+      }
+      return true
+    }
+
+    const response = await fetch('/api/addresses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        ...payload,
+        is_default: addresses.length === 0,
+      }),
+    })
+    const data = await response.json()
+    if (!response.ok) {
+      toast.error(data?.message || 'Failed to save address')
+      return false
+    }
+    return true
+  }
+
+  const buildCheckoutAddress = () => {
+    const division = getDivisionName(formData.divisionId)
+    const district = getDistrictName(formData.districtId)
+    const thana = getThanaName(formData.thanaId)
+    const fullAddress = [formData.fullAddress, formData.area, formData.postalCode]
+      .filter(Boolean)
+      .join(', ')
+
+    return {
+      fullName: formData.fullName,
+      phoneNumber: formData.phoneNumber,
+      email: formData.email,
+      division,
+      district,
+      thana,
+      fullAddress,
+    }
+  }
+
   const handleCODSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validateForm()) return
 
     setIsLoading(true)
     try {
+      const saved = await ensureAddressSaved()
+      if (!saved) return
+
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           paymentMethod: 'cod',
-          address: formData,
+          address: buildCheckoutAddress(),
         }),
       })
 
@@ -150,12 +311,15 @@ export default function CheckoutClient() {
 
     setIsLoading(true)
     try {
+      const saved = await ensureAddressSaved()
+      if (!saved) return
+
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           paymentMethod: 'sslcommerz',
-          address: formData,
+          address: buildCheckoutAddress(),
         }),
       })
 
@@ -205,6 +369,69 @@ export default function CheckoutClient() {
               <CardTitle>Shipping Address</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-foreground">Saved Addresses</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedAddressId(null)
+                      setFormData((prev) => ({
+                        ...prev,
+                        fullName: '',
+                        phoneNumber: '',
+                        divisionId: '',
+                        districtId: '',
+                        thanaId: '',
+                        area: '',
+                        fullAddress: '',
+                        postalCode: '',
+                      }))
+                    }}
+                  >
+                    Create New
+                  </Button>
+                </div>
+
+                {addressesLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading saved addresses...</p>
+                ) : addresses.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No saved addresses found.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {addresses.map((addr) => (
+                      <label
+                        key={addr.id}
+                        className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer ${
+                          selectedAddressId === addr.id ? 'border-primary/60 bg-primary/5' : 'border-border'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="saved-address"
+                          className="mt-1"
+                          checked={selectedAddressId === addr.id}
+                          onChange={() => setSelectedAddressId(addr.id)}
+                        />
+                        <div className="text-sm">
+                          <p className="font-medium text-foreground">{addr.full_name}</p>
+                          <p className="text-muted-foreground">{addr.phone_number}</p>
+                          <p className="text-muted-foreground">
+                            {addr.full_address}
+                            {addr.area && `, ${addr.area}`}
+                          </p>
+                          <p className="text-muted-foreground">
+                            {getThanaName(addr.thana_id)}, {getDistrictName(addr.district_id)}, {getDivisionName(addr.division_id)}
+                            {addr.postal_code && ` ${addr.postal_code}`}
+                          </p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <form className="space-y-4">
                 {/* Name and Phone */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -249,14 +476,17 @@ export default function CheckoutClient() {
                     <label className="text-sm font-medium text-foreground mb-2 block">
                       Division
                     </label>
-                    <Select value={formData.division} onValueChange={(value) => handleInputChange('division', value)}>
+                    <Select
+                      value={formData.divisionId}
+                      onValueChange={(value) => handleInputChange('divisionId', value)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select division" />
                       </SelectTrigger>
                       <SelectContent>
-                        {DIVISIONS.map((div) => (
-                          <SelectItem key={div} value={div}>
-                            {div}
+                        {divisions.map((div) => (
+                          <SelectItem key={div.id} value={div.id}>
+                            {div.name_en}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -266,22 +496,55 @@ export default function CheckoutClient() {
                     <label className="text-sm font-medium text-foreground mb-2 block">
                       District
                     </label>
-                    <Input
-                      placeholder="District"
-                      value={formData.district}
-                      onChange={(e) => handleInputChange('district', e.target.value)}
-                    />
+                    <Select
+                      value={formData.districtId}
+                      onValueChange={(value) => handleInputChange('districtId', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select district" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {formData.divisionId &&
+                          districtsByDivisionId[formData.divisionId]?.map((dist) => (
+                            <SelectItem key={dist.id} value={dist.id}>
+                              {dist.name_en}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-foreground mb-2 block">
                       Thana/Upazila
                     </label>
-                    <Input
-                      placeholder="Thana"
-                      value={formData.thana}
-                      onChange={(e) => handleInputChange('thana', e.target.value)}
-                    />
+                    <Select
+                      value={formData.thanaId}
+                      onValueChange={(value) => handleInputChange('thanaId', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select thana" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {formData.districtId &&
+                          thanasByDistrictId[formData.districtId]?.map((thana) => (
+                            <SelectItem key={thana.id} value={thana.id}>
+                              {thana.name_en}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">
+                    Area/Locality
+                  </label>
+                  <Input
+                    placeholder="e.g., Block C, House 10"
+                    value={formData.area}
+                    onChange={(e) => handleInputChange('area', e.target.value)}
+                  />
                 </div>
 
                 {/* Full Address */}
@@ -295,6 +558,17 @@ export default function CheckoutClient() {
                     placeholder="Enter your complete address"
                     value={formData.fullAddress}
                     onChange={(e) => handleInputChange('fullAddress', e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">
+                    Postal Code
+                  </label>
+                  <Input
+                    placeholder="e.g., 1212"
+                    value={formData.postalCode}
+                    onChange={(e) => handleInputChange('postalCode', e.target.value)}
                   />
                 </div>
               </form>
@@ -369,9 +643,9 @@ export default function CheckoutClient() {
                   <span className="text-muted-foreground">Delivery</span>
                   <span className="font-medium">৳{deliveryCharge}</span>
                 </div>
-                {formData.division && (
+                {selectedDivisionName && (
                   <p className="text-xs text-muted-foreground">
-                    {formData.division === 'Dhaka'
+                    {selectedDivisionName === 'Dhaka'
                       ? 'Inside Dhaka - Free/Standard'
                       : 'Outside Dhaka - Standard Delivery'}
                   </p>

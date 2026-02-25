@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { MapPin, Trash2, Check, Plus, Edit2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase'
 import {
   divisions,
   districtsByDivisionId,
@@ -55,10 +54,13 @@ export function UserAddressesList() {
 
   const fetchAddresses = async () => {
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase.from('user_addresses').select('*').order('is_default', { ascending: false })
+      const response = await fetch('/api/addresses', { credentials: 'include' })
+      const data = await response.json()
 
-      if (error) throw error
+      if (!response.ok) {
+        throw new Error(data?.message || 'Failed to load addresses')
+      }
+
       setAddresses(data || [])
     } catch (error) {
       console.error('Error fetching addresses:', error)
@@ -71,20 +73,29 @@ export function UserAddressesList() {
     setLoading(true)
 
     try {
-      const supabase = createClient()
-
       if (editingId) {
-        const { error } = await supabase
-          .from('user_addresses')
-          .update(formData)
-          .eq('id', editingId)
-
-        if (error) throw error
+        const response = await fetch('/api/addresses', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ id: editingId, ...formData }),
+        })
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data?.message || 'Failed to update address')
+        }
         toast.success('Address updated successfully')
       } else {
-        const { error } = await supabase.from('user_addresses').insert([formData])
-
-        if (error) throw error
+        const response = await fetch('/api/addresses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(formData),
+        })
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data?.message || 'Failed to add address')
+        }
         toast.success('Address added successfully')
       }
 
@@ -104,7 +115,7 @@ export function UserAddressesList() {
       fetchAddresses()
     } catch (error) {
       console.error('Error saving address:', error)
-      toast.error('Failed to save address')
+      toast.error(error instanceof Error ? error.message : 'Failed to save address')
     } finally {
       setLoading(false)
     }
@@ -114,34 +125,39 @@ export function UserAddressesList() {
     if (!confirm('Are you sure you want to delete this address?')) return
 
     try {
-      const supabase = createClient()
-      const { error } = await supabase.from('user_addresses').delete().eq('id', id)
-
-      if (error) throw error
+      const response = await fetch(`/api/addresses?id=${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data?.message || 'Failed to delete address')
+      }
       toast.success('Address deleted')
       fetchAddresses()
     } catch (error) {
       console.error('Error deleting address:', error)
-      toast.error('Failed to delete address')
+      toast.error(error instanceof Error ? error.message : 'Failed to delete address')
     }
   }
 
   const handleSetDefault = async (id: string) => {
     try {
-      const supabase = createClient()
-
-      // Remove default from others
-      await supabase.from('user_addresses').update({ is_default: false }).neq('id', id)
-
-      // Set as default
-      const { error } = await supabase.from('user_addresses').update({ is_default: true }).eq('id', id)
-
-      if (error) throw error
+      const response = await fetch('/api/addresses', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ id, set_default: true }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data?.message || 'Failed to update default address')
+      }
       toast.success('Default address updated')
       fetchAddresses()
     } catch (error) {
       console.error('Error updating default address:', error)
-      toast.error('Failed to update default address')
+      toast.error(error instanceof Error ? error.message : 'Failed to update default address')
     }
   }
 
