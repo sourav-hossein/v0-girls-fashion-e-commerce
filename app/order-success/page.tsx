@@ -4,13 +4,30 @@ import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 
 export const metadata = {
   title: 'Order Confirmed - Hijab & Fashion Hub',
   description: 'Your order has been successfully placed',
 }
 
-export default function OrderSuccessPage() {
+export default async function OrderSuccessPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ orderId?: string }>
+}) {
+  const params = await searchParams
+  const orderId = params.orderId
+  const supabase = await createServerSupabaseClient()
+
+  const { data: order } = orderId
+    ? await supabase
+        .from('orders')
+        .select('order_number, total_amount, status, created_at')
+        .eq('order_number', orderId)
+        .single()
+    : { data: null }
+
   return (
     <main className="bg-background min-h-screen flex flex-col">
       <Header />
@@ -43,27 +60,37 @@ export default function OrderSuccessPage() {
                     <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">
                       Order Number
                     </p>
-                    <p className="text-xl font-bold text-foreground">ORD-#123456</p>
+                    <p className="text-xl font-bold text-foreground">
+                      {order?.order_number || 'N/A'}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">
                       Order Date
                     </p>
                     <p className="text-xl font-bold text-foreground">
-                      {new Date().toLocaleDateString()}
+                      {order?.created_at
+                        ? new Date(order.created_at).toLocaleDateString()
+                        : new Date().toLocaleDateString()}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">
                       Total Amount
                     </p>
-                    <p className="text-xl font-bold text-primary">৳12,999</p>
+                    <p className="text-xl font-bold text-primary">
+                      ৳{order?.total_amount ?? '0'}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">
                       Status
                     </p>
-                    <p className="text-xl font-bold text-green-600">Confirmed</p>
+                    <p className="text-xl font-bold text-green-600">
+                      {order?.status
+                        ? order.status[0].toUpperCase() + order.status.slice(1)
+                        : 'Pending'}
+                    </p>
                   </div>
                 </div>
               </div>

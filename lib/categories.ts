@@ -27,5 +27,5 @@ const getCategories = async (): Promise<Category[]> => {
 export const getCachedCategories = unstable_cache(
   getCategories,
   ['categories'],
-  { revalidate: 300 },
+  { revalidate: 300, tags: ['categories'] },
 )

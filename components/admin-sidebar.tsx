@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   Package,
+  Tag,
   ShoppingCart,
   BarChart3,
   Settings,
@@ -22,6 +23,11 @@ const menuItems = [
     label: 'Products',
     href: '/admin/products',
     icon: Package,
+  },
+  {
+    label: 'Categories',
+    href: '/admin/categories',
+    icon: Tag,
   },
   {
     label: 'Orders',

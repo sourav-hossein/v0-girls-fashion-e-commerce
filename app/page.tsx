@@ -29,8 +29,6 @@ export default async function Home() {
 
   // Fetch categories
   const categories = await getCachedCategories()
-  console.log('Fetched categories:', categories)
-
   return (
     <main className="bg-background">
       <Header />

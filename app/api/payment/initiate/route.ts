@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
  * - SSLCOMMERZ_STORE_ID
  * - SSLCOMMERZ_STORE_PASSWORD
  * - SSLCOMMERZ_API_URL (sandbox or live)
+ * - SSLCOMMERZ_VALIDATE_URL (optional)
  */
 
 interface PaymentRequest {
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate environment variables
-    const storeId = process.env.SSLCOMMERZ_STORE_ID
+    const storeId = process.env.SSLCOMMERZ_STORE_ID || process.env.NEXT_PUBLIC_SSLCOMMERZ_STORE_ID
     const storePassword = process.env.SSLCOMMERZ_STORE_PASSWORD
     const apiUrl = process.env.SSLCOMMERZ_API_URL || 'https://sandbox.sslcommerz.com/gwprocess/v4/api.php'
 

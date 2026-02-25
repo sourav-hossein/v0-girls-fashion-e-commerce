@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -30,6 +30,8 @@ export default function CheckoutClient() {
   const [paymentMethod, setPaymentMethod] = useState<'sslcommerz' | 'cod'>('cod')
   const [isLoading, setIsLoading] = useState(false)
   const [orderPlaced, setOrderPlaced] = useState(false)
+  const [cartItems, setCartItems] = useState<any[]>([])
+  const [cartLoading, setCartLoading] = useState(true)
 
   // Form states
   const [formData, setFormData] = useState({
@@ -42,7 +44,29 @@ export default function CheckoutClient() {
     fullAddress: '',
   })
 
-  const subtotal = 0 // This will be calculated from cart in real implementation
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        const response = await fetch('/api/cart')
+        if (!response.ok) {
+          throw new Error('Failed to load cart')
+        }
+        const data = await response.json()
+        setCartItems(data || [])
+      } catch (error) {
+      toast.error('Failed to load cart')
+      } finally {
+        setCartLoading(false)
+      }
+    }
+
+    loadCart()
+  }, [])
+
+  const subtotal = cartItems.reduce((sum, item) => {
+    const price = item.product?.discount_price ?? item.product?.price ?? 0
+    return sum + price * (item.quantity || 1)
+  }, 0)
   const deliveryCharge = formData.division ? (
     formData.division === 'Dhaka'
       ? DELIVERY_CHARGE_INSIDE_DHAKA
@@ -80,6 +104,11 @@ export default function CheckoutClient() {
       return false
     }
 
+    if (cartItems.length === 0) {
+      toast.error('Your cart is empty')
+      return false
+    }
+
     return true
   }
 
@@ -89,13 +118,25 @@ export default function CheckoutClient() {
 
     setIsLoading(true)
     try {
-      // In a real app, create order with payment method = 'cod'
-      // await createOrder({...formData, paymentMethod: 'cod'})
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentMethod: 'cod',
+          address: formData,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to place order')
+      }
+
       setOrderPlaced(true)
       toast.success('Order placed successfully!')
       setTimeout(() => {
-        router.push('/order-success')
-      }, 2000)
+        router.push(`/order-success?orderId=${data.orderId}`)
+      }, 1500)
     } catch (error) {
       toast.error('Failed to place order')
     } finally {
@@ -109,18 +150,22 @@ export default function CheckoutClient() {
 
     setIsLoading(true)
     try {
-      // In a real app, initiate SSLCommerz payment
-      // const response = await initiateSSLCommerzPayment({
-      //   amount: total,
-      //   orderId: generateOrderId(),
-      //   customerDetails: formData,
-      // })
-      // Redirect to SSLCommerz gateway
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentMethod: 'sslcommerz',
+          address: formData,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok || !data.redirectUrl) {
+        throw new Error(data.error || 'Failed to initiate payment')
+      }
+
       toast.success('Redirecting to payment gateway...')
-      setOrderPlaced(true)
-      setTimeout(() => {
-        router.push('/order-success')
-      }, 2000)
+      window.location.href = data.redirectUrl
     } catch (error) {
       toast.error('Failed to process payment')
     } finally {
@@ -276,7 +321,7 @@ export default function CheckoutClient() {
                   </div>
                   <Button
                     onClick={handleCODSubmit}
-                    disabled={isLoading}
+                    disabled={isLoading || cartLoading || cartItems.length === 0}
                     className="w-full bg-primary hover:bg-primary/90 h-12 text-primary-foreground"
                   >
                     {isLoading ? 'Processing...' : 'Place Order'}
@@ -297,7 +342,7 @@ export default function CheckoutClient() {
                   </div>
                   <Button
                     onClick={handleSSLCommerzSubmit}
-                    disabled={isLoading}
+                    disabled={isLoading || cartLoading || cartItems.length === 0}
                     className="w-full bg-accent hover:bg-accent/90 h-12 text-accent-foreground"
                   >
                     {isLoading ? 'Processing...' : 'Pay with SSLCommerz'}
@@ -344,7 +389,7 @@ export default function CheckoutClient() {
               <div className="bg-muted/30 p-4 rounded-lg space-y-2 text-sm">
                 <h4 className="font-semibold text-foreground mb-3">Your Order</h4>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Items (0)</span>
+                  <span className="text-muted-foreground">Items ({cartItems.length})</span>
                   <span>৳{subtotal}</span>
                 </div>
               </div>
