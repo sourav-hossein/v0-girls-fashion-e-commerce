@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Product } from '@/lib/types'
+import { Product, ProductImage } from '@/lib/types'
 import {
   Table,
   TableBody,
@@ -17,11 +17,16 @@ import { Edit, Trash2, Eye } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
-interface AdminProductsListProps {
-  products: Product[]
+type ProductWithImages = Product & {
+  product_images?: ProductImage[]
 }
 
-export default function AdminProductsList({ products }: AdminProductsListProps) {
+interface AdminProductsListProps {
+  products: ProductWithImages[]
+  onRefresh?: () => void
+}
+
+export default function AdminProductsList({ products, onRefresh }: AdminProductsListProps) {
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
 
   const handleDelete = async (id: string) => {
@@ -29,14 +34,44 @@ export default function AdminProductsList({ products }: AdminProductsListProps) 
 
     setIsDeleting(id)
     try {
-      // In a real app, make API call to delete
-      // await deleteProduct(id)
-      toast.success('Product deleted successfully')
+      const response = await fetch(`/api/admin/products/${id}`, { method: 'DELETE' })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Failed to delete product')
+      }
+      toast.success('Product deleted')
+      onRefresh?.()
     } catch (error) {
-      toast.error('Failed to delete product')
+      toast.error(error instanceof Error ? error.message : 'Failed to delete product')
     } finally {
       setIsDeleting(null)
     }
+  }
+
+  const handleRestore = async (id: string) => {
+    setIsDeleting(id)
+    try {
+      const response = await fetch(`/api/admin/products/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deleted_at: null }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Failed to restore product')
+      }
+      toast.success('Product restored')
+      onRefresh?.()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to restore product')
+    } finally {
+      setIsDeleting(null)
+    }
+  }
+
+  const getMainImage = (product: ProductWithImages) => {
+    const images = product.product_images || []
+    return images.find((img) => img.is_main) || images[0]
   }
 
   return (
@@ -45,7 +80,7 @@ export default function AdminProductsList({ products }: AdminProductsListProps) 
         <Table>
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
-              <TableHead>Product Name</TableHead>
+              <TableHead>Product</TableHead>
               <TableHead>Category</TableHead>
               <TableHead className="text-right">Price</TableHead>
               <TableHead className="text-right">Stock</TableHead>
@@ -58,9 +93,20 @@ export default function AdminProductsList({ products }: AdminProductsListProps) 
               products.map((product) => (
                 <TableRow key={product.id} className="border-border hover:bg-muted/50">
                   <TableCell>
-                    <div>
-                      <p className="font-medium text-foreground">{product.name}</p>
-                      <p className="text-xs text-muted-foreground">{product.slug}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-lg bg-muted overflow-hidden">
+                        {getMainImage(product)?.image_url ? (
+                          <img
+                            src={getMainImage(product)?.image_url}
+                            alt={product.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : null}
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">{product.slug}</p>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
@@ -100,6 +146,9 @@ export default function AdminProductsList({ products }: AdminProductsListProps) 
                       {product.trending && (
                         <Badge className="bg-accent/20 text-accent">Trending</Badge>
                       )}
+                      {product.deleted_at && (
+                        <Badge className="bg-destructive/10 text-destructive">Deleted</Badge>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
@@ -131,6 +180,17 @@ export default function AdminProductsList({ products }: AdminProductsListProps) 
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
+                      {product.deleted_at && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-foreground"
+                          onClick={() => handleRestore(product.id)}
+                          disabled={isDeleting === product.id}
+                        >
+                          Restore
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

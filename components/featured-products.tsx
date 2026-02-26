@@ -1,13 +1,17 @@
-import { Product } from '@/lib/types'
+import { Product, ProductImage } from '@/lib/types'
 import ProductCard from './product-card'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
 interface FeaturedProductsProps {
-  products: Product[]
+  products: (Product & { product_images?: ProductImage[] })[]
 }
 
 export default function FeaturedProducts({ products }: FeaturedProductsProps) {
+  const getMainImage = (product: Product & { product_images?: ProductImage[] }) => {
+    const images = product.product_images || []
+    return images.find((img) => img.is_main) || images[0]
+  }
   return (
     <section className="py-16 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -30,7 +34,11 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
         {products.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                image={getMainImage(product)?.image_url}
+              />
             ))}
           </div>
         ) : (

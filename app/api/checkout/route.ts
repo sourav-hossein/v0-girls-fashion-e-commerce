@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { generateOrderReference } from '@/lib/sslcommerz'
+import { createAdminSupabaseClient } from '@/lib/supabase-admin'
 
 type PaymentMethod = 'sslcommerz' | 'cod'
 
@@ -18,8 +19,7 @@ interface CheckoutPayload {
   couponCode?: string
 }
 
-const DELIVERY_CHARGE_INSIDE_DHAKA = 60
-const DELIVERY_CHARGE_OUTSIDE_DHAKA = 120
+const DEFAULT_FLAT_SHIPPING_RATE = 60
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,10 +83,29 @@ export async function POST(request: NextRequest) {
       return sum + price * (item.quantity || 1)
     }, 0)
 
-    const deliveryCharge =
-      address.division === 'Dhaka'
-        ? DELIVERY_CHARGE_INSIDE_DHAKA
-        : DELIVERY_CHARGE_OUTSIDE_DHAKA
+    const adminSupabase = await createAdminSupabaseClient()
+    const { data: settings } = await adminSupabase
+      .from('store_settings')
+      .select('flat_shipping_rate, free_shipping_threshold, cod_enabled, sslcommerz_enabled')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (paymentMethod === 'cod' && settings?.cod_enabled === false) {
+      return NextResponse.json({ error: 'Cash on Delivery is disabled' }, { status: 400 })
+    }
+
+    if (paymentMethod === 'sslcommerz' && settings?.sslcommerz_enabled === false) {
+      return NextResponse.json({ error: 'Online payment is disabled' }, { status: 400 })
+    }
+
+    const flatRate = typeof settings?.flat_shipping_rate === 'number'
+      ? settings.flat_shipping_rate
+      : DEFAULT_FLAT_SHIPPING_RATE
+    const freeThreshold = typeof settings?.free_shipping_threshold === 'number'
+      ? settings.free_shipping_threshold
+      : null
+    const deliveryCharge = freeThreshold !== null && subtotal >= freeThreshold ? 0 : flatRate
     let discountAmount = 0
     let total = subtotal + deliveryCharge
 

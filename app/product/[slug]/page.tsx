@@ -75,7 +75,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   // Fetch related products (same category, limit 4)
   const { data: relatedProducts } = await supabase
     .from('products')
-    .select('*')
+    .select('*, product_images (image_url, is_main, display_order)')
     .eq('category_id', product.category_id)
     .neq('id', product.id)
     .is('deleted_at', null)

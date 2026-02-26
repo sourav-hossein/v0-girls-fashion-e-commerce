@@ -1,6 +1,6 @@
 import { requireAdmin } from '@/lib/auth'
 import { createAdminSupabaseClient } from '@/lib/supabase-admin'
-import AdminProductEditor from '@/components/admin-product-editor'
+import AdminProductForm from '@/components/admin-product-form'
 
 export const metadata = {
   title: 'Edit Product - Admin Dashboard',
@@ -29,15 +29,32 @@ export default async function AdminProductEditPage({ params }: ProductEditPagePr
     )
   }
 
-  const { data: variants } = await supabase
-    .from('product_variants')
-    .select('*')
-    .eq('product_id', id)
-    .order('variant_type', { ascending: true })
+  const [{ data: variants }, { data: images }, { data: categories }] = await Promise.all([
+    supabase
+      .from('product_variants')
+      .select('*')
+      .eq('product_id', id)
+      .order('variant_type', { ascending: true }),
+    supabase
+      .from('product_images')
+      .select('*')
+      .eq('product_id', id)
+      .order('display_order', { ascending: true }),
+    supabase
+      .from('categories')
+      .select('*')
+      .order('name', { ascending: true }),
+  ])
 
   return (
     <div className="p-6 space-y-6">
-      <AdminProductEditor product={product} variants={variants || []} />
+      <AdminProductForm
+        mode="edit"
+        product={product}
+        variants={variants || []}
+        images={images || []}
+        categories={categories || []}
+      />
     </div>
   )
 }

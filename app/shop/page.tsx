@@ -31,7 +31,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   // Fetch all products with pagination
   let query = supabase
     .from('products')
-    .select('*', { count: 'exact' })
+    .select('*, product_images (image_url, is_main, display_order)', { count: 'exact' })
     .is('deleted_at', null)
 
   // Apply filters

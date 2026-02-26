@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { addToCart, CartAuthError } from '@/lib/cart-api'
+import { trackEvent } from '@/lib/analytics-client'
 
 interface ProductCardProps {
   product: Product
@@ -28,9 +29,17 @@ export default function ProductCard({ product, image }: ProductCardProps) {
     <Card className="hover:shadow-lg transition-all duration-300 overflow-hidden group h-full flex flex-col relative">
       <Link href={`/product/${product.slug}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-muted cursor-pointer">
-          <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <span className="text-4xl">ðŸ›ï¸</span>
-          </div>
+          {image ? (
+            <img
+              src={image}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+              <span className="text-4xl">Ã°Å¸â€ºÂÃ¯Â¸Â</span>
+            </div>
+          )}
 
           {discount > 0 && (
             <div className="absolute top-3 right-3 bg-accent text-accent-foreground px-2 py-1 rounded-lg text-xs font-semibold">
@@ -103,12 +112,12 @@ export default function ProductCard({ product, image }: ProductCardProps) {
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-primary">
             {product.discount_price
-              ? `à§³${product.discount_price}`
-              : `à§³${product.price}`}
+              ? `Ã Â§Â³${product.discount_price}`
+              : `Ã Â§Â³${product.price}`}
           </span>
           {product.discount_price && (
             <span className="text-sm text-muted-foreground line-through">
-              à§³{product.price}
+              Ã Â§Â³{product.price}
             </span>
           )}
         </div>
@@ -126,6 +135,7 @@ export default function ProductCard({ product, image }: ProductCardProps) {
             setIsCartLoading(true)
             try {
               await addToCart({ productId: product.id, quantity: 1 })
+              trackEvent('add_to_cart', { product_id: product.id, path: `/product/${product.slug}` })
               toast.success('Added to cart')
             } catch (error) {
               if (error instanceof CartAuthError) {

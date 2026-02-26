@@ -16,7 +16,7 @@ export default async function Home() {
   // Fetch featured products
   const { data: featuredProducts } = await supabase
     .from('products')
-    .select('*')
+    .select('*, product_images (image_url, is_main, display_order)')
     .eq('featured', true)
     .is('deleted_at', null)
     .limit(8)
@@ -24,7 +24,7 @@ export default async function Home() {
   // Fetch trending products
   const { data: trendingProducts } = await supabase
     .from('products')
-    .select('*')
+    .select('*, product_images (image_url, is_main, display_order)')
     .eq('trending', true)
     .is('deleted_at', null)
     .limit(8)

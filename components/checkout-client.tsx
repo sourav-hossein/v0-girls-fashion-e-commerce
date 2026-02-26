@@ -19,9 +19,16 @@ import {
   getThanaName,
 } from '@/lib/geo-data'
 import { Label } from './ui/label'
+import { trackEvent } from '@/lib/analytics-client'
 
-const DELIVERY_CHARGE_INSIDE_DHAKA = 60
-const DELIVERY_CHARGE_OUTSIDE_DHAKA = 120
+const DEFAULT_FLAT_SHIPPING_RATE = 60
+
+type CheckoutSettings = {
+  flat_shipping_rate?: number | null
+  free_shipping_threshold?: number | null
+  cod_enabled?: boolean | null
+  sslcommerz_enabled?: boolean | null
+}
 
 interface UserAddress {
   id: string
@@ -35,7 +42,7 @@ interface UserAddress {
   is_default: boolean
 }
 
-export default function CheckoutClient() {
+export default function CheckoutClient({ settings }: { settings?: CheckoutSettings }) {
   const router = useRouter()
   const [paymentMethod, setPaymentMethod] = useState<'sslcommerz' | 'cod'>('cod')
   const [isLoading, setIsLoading] = useState(false)
@@ -58,6 +65,16 @@ export default function CheckoutClient() {
   })
 
   useEffect(() => {
+    if (!codEnabled && sslcommerzEnabled) {
+      setPaymentMethod('sslcommerz')
+    }
+    if (!sslcommerzEnabled && codEnabled) {
+      setPaymentMethod('cod')
+    }
+  }, [codEnabled, sslcommerzEnabled])
+
+  useEffect(() => {
+    trackEvent('checkout_started', { path: '/checkout' })
     const loadCart = async () => {
       try {
         const response = await fetch('/api/cart')
@@ -129,7 +146,6 @@ export default function CheckoutClient() {
     const price = item.product?.discount_price ?? item.product?.price ?? 0
     return sum + price * (item.quantity || 1)
   }, 0)
-  const selectedDivisionName = formData.division_id ? getDivisionName(formData.division_id) : ''
   const divisionExists = !!formData.division_id && divisions.some((div) => div.id === formData.division_id)
   const districtExists =
     !!formData.division_id &&
@@ -140,12 +156,18 @@ export default function CheckoutClient() {
     !!formData.thana_id &&
     thanasByDistrictId[formData.district_id]?.some((thana) => thana.id === formData.thana_id)
   const hasMissingGeo = selectedAddressId && (!divisionExists || !districtExists || !thanaExists)
-  const deliveryCharge = selectedDivisionName ? (
-    selectedDivisionName === 'Dhaka'
-      ? DELIVERY_CHARGE_INSIDE_DHAKA
-      : DELIVERY_CHARGE_OUTSIDE_DHAKA
-  ) : 0
+  const flatRate = typeof settings?.flat_shipping_rate === 'number'
+    ? settings.flat_shipping_rate
+    : DEFAULT_FLAT_SHIPPING_RATE
+  const freeThreshold = typeof settings?.free_shipping_threshold === 'number'
+    ? settings.free_shipping_threshold
+    : null
+  const deliveryCharge =
+    freeThreshold !== null && subtotal >= freeThreshold ? 0 : flatRate
   const total = subtotal + deliveryCharge
+
+  const codEnabled = settings?.cod_enabled !== false
+  const sslcommerzEnabled = settings?.sslcommerz_enabled !== false
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => {
@@ -576,8 +598,8 @@ export default function CheckoutClient() {
             <CardContent className="p-6">
               <Tabs value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'sslcommerz' | 'cod')}>
                 <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="cod">Cash on Delivery</TabsTrigger>
-                  <TabsTrigger value="sslcommerz">Online Payment</TabsTrigger>
+                  <TabsTrigger value="cod" disabled={!codEnabled}>Cash on Delivery</TabsTrigger>
+                  <TabsTrigger value="sslcommerz" disabled={!sslcommerzEnabled}>Online Payment</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="cod" className="space-y-4">
@@ -588,11 +610,16 @@ export default function CheckoutClient() {
                   </div>
                   <Button
                     onClick={handleCODSubmit}
-                    disabled={isLoading || cartLoading || cartItems.length === 0}
+                    disabled={!codEnabled || isLoading || cartLoading || cartItems.length === 0}
                     className="w-full bg-primary hover:bg-primary/90 h-12 text-primary-foreground"
                   >
                     {isLoading ? 'Processing...' : 'Place Order'}
                   </Button>
+                  {!codEnabled && (
+                    <p className="text-xs text-muted-foreground">
+                      Cash on Delivery is currently disabled.
+                    </p>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="sslcommerz" className="space-y-4">
@@ -609,11 +636,16 @@ export default function CheckoutClient() {
                   </div>
                   <Button
                     onClick={handleSSLCommerzSubmit}
-                    disabled={isLoading || cartLoading || cartItems.length === 0}
+                    disabled={!sslcommerzEnabled || isLoading || cartLoading || cartItems.length === 0}
                     className="w-full bg-accent hover:bg-accent/90 h-12 text-accent-foreground"
                   >
                     {isLoading ? 'Processing...' : 'Pay with SSLCommerz'}
                   </Button>
+                  {!sslcommerzEnabled && (
+                    <p className="text-xs text-muted-foreground">
+                      Online payment is currently disabled.
+                    </p>
+                  )}
                 </TabsContent>
               </Tabs>
             </CardContent>
@@ -636,11 +668,9 @@ export default function CheckoutClient() {
                   <span className="text-muted-foreground">Delivery</span>
                   <span className="font-medium">৳{deliveryCharge}</span>
                 </div>
-                {selectedDivisionName && (
+                {freeThreshold !== null && subtotal >= freeThreshold && (
                   <p className="text-xs text-muted-foreground">
-                    {selectedDivisionName === 'Dhaka'
-                      ? 'Inside Dhaka - Free/Standard'
-                      : 'Outside Dhaka - Standard Delivery'}
+                    Free shipping applied (threshold: à§³{freeThreshold})
                   </p>
                 )}
               </div>

@@ -34,6 +34,7 @@ export interface Product {
   low_stock_threshold?: number
   featured: boolean
   trending: boolean
+  deleted_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -45,6 +46,7 @@ export interface ProductImage {
   alt_text?: string
   is_main: boolean
   display_order: number
+  storage_path?: string | null
   created_at: string
 }
 

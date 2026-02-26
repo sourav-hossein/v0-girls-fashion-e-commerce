@@ -5,18 +5,18 @@ import { useRouter } from 'next/navigation'
 import { Heart, ShoppingCart, Star, Truck, RefreshCw } from 'lucide-react'
 import { Product, ProductImage, ProductVariant, Review } from '@/lib/types'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import ProductCard from './product-card'
 import { addToCart, CartAuthError } from '@/lib/cart-api'
+import { trackEvent } from '@/lib/analytics-client'
 
 interface ProductDetailClientProps {
   product: Product
   images: ProductImage[]
   variants: ProductVariant[]
   reviews: Review[]
-  relatedProducts: Product[]
+  relatedProducts: (Product & { product_images?: ProductImage[] })[]
 }
 
 export default function ProductDetailClient({
@@ -28,31 +28,34 @@ export default function ProductDetailClient({
 }: ProductDetailClientProps) {
   const router = useRouter()
   const [quantity, setQuantity] = useState(1)
-  const [selectedColor, setSelectedColor] = useState<string>('')
-  const [selectedSize, setSelectedSize] = useState<string>('')
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isWishlistLoading, setIsWishlistLoading] = useState(true)
 
   const mainImage = images.find(img => img.is_main) || images[0]
+  const activeImage =
+    images.find((img) => img.id === selectedImageId) || mainImage || images[0]
   const discount = product.discount_price
     ? Math.round(((product.price - product.discount_price) / product.price) * 100)
     : 0
 
-  const colorVariants = variants.filter(v => v.variant_type === 'color')
-  const sizeVariants = variants.filter(v => v.variant_type === 'size')
-  const hasColorVariants = colorVariants.length > 0
-  const hasSizeVariants = sizeVariants.length > 0
+  const groupedVariants = variants.reduce<Record<string, ProductVariant[]>>((acc, variant) => {
+    const key = variant.variant_type || 'Variant'
+    if (!acc[key]) acc[key] = []
+    acc[key].push(variant)
+    return acc
+  }, {})
 
-  const selectedVariant = hasColorVariants
-    ? colorVariants.find(v => v.variant_value === selectedColor)
-    : hasSizeVariants
-    ? sizeVariants.find(v => v.variant_value === selectedSize)
+  const selectedVariant = selectedVariantId
+    ? variants.find((variant) => variant.id === selectedVariantId)
     : undefined
 
   const availableStock = selectedVariant?.stock_quantity ?? product.stock_quantity
 
   useEffect(() => {
+    trackEvent('product_view', { product_id: product.id, path: `/product/${product.slug}` })
     const loadWishlistState = async () => {
       try {
         const response = await fetch('/api/wishlist')
@@ -76,12 +79,8 @@ export default function ProductDetailClient({
   }, [product.id])
 
   const handleAddToCart = async () => {
-    if (hasColorVariants && !selectedColor) {
-      toast.error('Please select a color')
-      return
-    }
-    if (hasSizeVariants && !selectedSize) {
-      toast.error('Please select a size')
+    if (variants.length > 0 && !selectedVariantId) {
+      toast.error('Please select a variant')
       return
     }
 
@@ -92,6 +91,7 @@ export default function ProductDetailClient({
         variantId: selectedVariant?.id ?? null,
         quantity,
       })
+      trackEvent('add_to_cart', { product_id: product.id, path: `/product/${product.slug}` })
       toast.success('Added to cart!')
     } catch (error) {
       if (error instanceof CartAuthError) {
@@ -141,23 +141,45 @@ export default function ProductDetailClient({
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : 0
 
+  const getMainImage = (item: Product & { product_images?: ProductImage[] }) => {
+    const gallery = item.product_images || []
+    return gallery.find((img) => img.is_main) || gallery[0]
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
         {/* Images */}
         <div className="space-y-4">
           <div className="aspect-square bg-muted rounded-2xl overflow-hidden flex items-center justify-center">
-            <div className="text-6xl">ðŸ›ï¸</div>
+            {activeImage?.image_url ? (
+              <img
+                src={activeImage.image_url}
+                alt={activeImage.alt_text || product.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="text-6xl">Ã°Å¸â€ºÂÃ¯Â¸Â</div>
+            )}
           </div>
           {images.length > 1 && (
             <div className="grid grid-cols-4 gap-3">
-              {images.slice(0, 4).map((image, idx) => (
-                <div
-                  key={idx}
-                  className="aspect-square bg-muted rounded-lg overflow-hidden cursor-pointer hover:border-primary border-2 border-transparent transition-colors flex items-center justify-center"
+              {images.slice(0, 4).map((image) => (
+                <button
+                  key={image.id}
+                  onClick={() => setSelectedImageId(image.id)}
+                  className={`aspect-square bg-muted rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${
+                    activeImage?.id === image.id
+                      ? 'border-primary'
+                      : 'border-transparent hover:border-primary/50'
+                  }`}
                 >
-                  <span className="text-2xl">ðŸ“·</span>
-                </div>
+                  <img
+                    src={image.image_url}
+                    alt={image.alt_text || product.name}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
               ))}
             </div>
           )}
@@ -200,12 +222,12 @@ export default function ProductDetailClient({
           <div className="space-y-2">
             <div className="flex items-baseline gap-3">
               <span className="text-4xl font-bold text-primary">
-                à§³{product.discount_price || product.price}
+                Ã Â§Â³{product.discount_price || product.price}
               </span>
               {product.discount_price && (
                 <>
                   <span className="text-xl text-muted-foreground line-through">
-                    à§³{product.price}
+                    Ã Â§Â³{product.price}
                   </span>
                   <span className="text-lg font-bold text-accent">
                     Save {discount}%
@@ -225,16 +247,18 @@ export default function ProductDetailClient({
           </div>
 
           {/* Variants */}
-          {colorVariants.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-foreground mb-3">Color</h3>
+          {Object.entries(groupedVariants).map(([variantType, variantList]) => (
+            <div key={variantType}>
+              <h3 className="font-semibold text-foreground mb-3">
+                {variantType.charAt(0).toUpperCase() + variantType.slice(1)}
+              </h3>
               <div className="flex gap-3 flex-wrap">
-                {colorVariants.map((variant) => (
+                {variantList.map((variant) => (
                   <button
                     key={variant.id}
-                    onClick={() => setSelectedColor(variant.variant_value)}
+                    onClick={() => setSelectedVariantId(variant.id)}
                     className={`px-4 py-2 rounded-lg border-2 transition-colors font-medium ${
-                      selectedColor === variant.variant_value
+                      selectedVariantId === variant.id
                         ? 'border-primary bg-primary/10 text-primary'
                         : 'border-border text-foreground hover:border-primary/50'
                     }`}
@@ -244,28 +268,7 @@ export default function ProductDetailClient({
                 ))}
               </div>
             </div>
-          )}
-
-          {sizeVariants.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-foreground mb-3">Size</h3>
-              <div className="flex gap-3 flex-wrap">
-                {sizeVariants.map((variant) => (
-                  <button
-                    key={variant.id}
-                    onClick={() => setSelectedSize(variant.variant_value)}
-                    className={`px-4 py-2 rounded-lg border-2 transition-colors font-medium ${
-                      selectedSize === variant.variant_value
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border text-foreground hover:border-primary/50'
-                    }`}
-                  >
-                    {variant.variant_value}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          ))}
 
           {/* Quantity */}
           <div>
@@ -275,7 +278,7 @@ export default function ProductDetailClient({
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 className="px-4 py-2 hover:bg-muted transition-colors"
               >
-                âˆ’
+                Ã¢Ë†â€™
               </button>
               <span className="px-4 py-2 font-semibold">{quantity}</span>
               <button
@@ -415,6 +418,7 @@ export default function ProductDetailClient({
               <ProductCard
                 key={relatedProduct.id}
                 product={relatedProduct}
+                image={getMainImage(relatedProduct)?.image_url}
               />
             ))}
           </div>

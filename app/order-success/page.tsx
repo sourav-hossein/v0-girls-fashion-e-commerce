@@ -5,6 +5,7 @@ import Footer from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import AnalyticsPurchase from '@/components/analytics-purchase'
 
 export const metadata = {
   title: 'Order Confirmed - Hijab & Fashion Hub',
@@ -33,6 +34,7 @@ export default async function OrderSuccessPage({
       <Header />
       <div className="flex-1">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <AnalyticsPurchase orderId={order?.order_number} />
           <Card className="border-border">
             <CardContent className="p-8 sm:p-12 text-center space-y-8">
               {/* Success Icon */}

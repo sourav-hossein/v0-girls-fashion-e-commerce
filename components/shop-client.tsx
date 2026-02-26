@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Product, Category } from '@/lib/types'
+import { Product, Category, ProductImage } from '@/lib/types'
 import ProductCard from './product-card'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,7 +21,7 @@ import {
 import { SlidersHorizontal, X } from 'lucide-react'
 
 interface ShopClientProps {
-  initialProducts: Product[]
+  initialProducts: (Product & { product_images?: ProductImage[] })[]
   categories: Category[]
   currentCategory?: string
   currentSort: string
@@ -284,7 +284,11 @@ export default function ShopClient({
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {initialProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    image={getMainImage(product)?.image_url}
+                  />
                 ))}
               </div>
 
@@ -339,3 +343,7 @@ export default function ShopClient({
     </div>
   )
 }
+  const getMainImage = (product: Product & { product_images?: ProductImage[] }) => {
+    const images = product.product_images || []
+    return images.find((img) => img.is_main) || images[0]
+  }
