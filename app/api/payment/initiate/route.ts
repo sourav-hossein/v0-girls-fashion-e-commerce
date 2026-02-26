@@ -20,7 +20,6 @@ interface PaymentRequest {
   customerAddress: string
   customerCity: string
   customerState: string
-  customerPostcode: string
   description?: string
 }
 
@@ -66,12 +65,11 @@ export async function POST(request: NextRequest) {
     formData.append('fail_url', `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payment/fail`)
     formData.append('cancel_url', `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payment/cancel`)
     formData.append('cus_name', body.customerName)
-    formData.append('cus_email', body.customerEmail)
+    // formData.append('cus_email', body.customerEmail)
     formData.append('cus_phone', body.customerPhone)
     formData.append('cus_add1', body.customerAddress)
     formData.append('cus_city', body.customerCity)
     formData.append('cus_state', body.customerState)
-    formData.append('cus_postcode', body.customerPostcode)
     formData.append('cus_country', 'Bangladesh')
     formData.append('product_name', body.description || 'Fashion Accessories')
     formData.append('product_category', 'Fashion')

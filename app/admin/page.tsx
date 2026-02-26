@@ -31,12 +31,16 @@ export default async function AdminDashboard() {
     .limit(5)
 
   // Fetch low stock products
-  const { data: lowStockProducts } = await supabase
+  const { data: lowStockProductsRaw } = await supabase
     .from('products')
     .select('*')
-    .lt('stock_quantity', 10)
     .order('stock_quantity')
-    .limit(5)
+
+  const lowStockProducts =
+    lowStockProductsRaw?.filter((product) => {
+      const threshold = product.low_stock_threshold ?? 10
+      return product.stock_quantity <= threshold
+    }).slice(0, 5) || []
 
   return (
     <div className="p-6 space-y-8">

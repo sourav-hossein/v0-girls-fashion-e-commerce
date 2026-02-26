@@ -5,6 +5,8 @@ export interface Profile {
   phone_number?: string
   phone_verified?: boolean
   last_login?: string
+  is_blocked?: boolean
+  blocked_reason?: string
   role?: 'customer' | 'admin'
   created_at: string
   updated_at: string
@@ -29,6 +31,7 @@ export interface Product {
   discount_price?: number
   category_id: string
   stock_quantity: number
+  low_stock_threshold?: number
   featured: boolean
   trending: boolean
   created_at: string

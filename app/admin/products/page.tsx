@@ -26,12 +26,17 @@ export default async function AdminProductsPage() {
           <h1 className="text-3xl font-serif font-bold text-foreground">Products</h1>
           <p className="text-muted-foreground mt-2">Manage your product inventory</p>
         </div>
-        <Link href="/admin/products/new">
-          <Button className="bg-primary hover:bg-primary/90 gap-2">
-            <Plus className="w-4 h-4" />
-            Add Product
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/admin/products/bulk-stock">
+            <Button variant="outline">Bulk Stock</Button>
+          </Link>
+          <Link href="/admin/products/new">
+            <Button className="bg-primary hover:bg-primary/90 gap-2">
+              <Plus className="w-4 h-4" />
+              Add Product
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Products List */}

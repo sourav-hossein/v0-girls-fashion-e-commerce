@@ -27,7 +27,6 @@ interface UserAddress {
   thana_id: string
   area?: string
   full_address: string
-  postal_code?: string
   is_default: boolean
 }
 
@@ -45,7 +44,6 @@ export function UserAddressesList() {
     thana_id: '',
     area: '',
     full_address: '',
-    postal_code: '',
   })
 
   useEffect(() => {
@@ -109,7 +107,6 @@ export function UserAddressesList() {
         thana_id: '',
         area: '',
         full_address: '',
-        postal_code: '',
       })
 
       fetchAddresses()
@@ -170,7 +167,6 @@ export function UserAddressesList() {
       thana_id: address.thana_id,
       area: address.area || '',
       full_address: address.full_address,
-      postal_code: address.postal_code || '',
     })
     setEditingId(address.id)
     setOpen(true)
@@ -194,7 +190,6 @@ export function UserAddressesList() {
                   thana_id: '',
                   area: '',
                   full_address: '',
-                  postal_code: '',
                 })
               }}
               className="bg-gradient-to-r from-primary to-accent"
@@ -322,15 +317,7 @@ export function UserAddressesList() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="postal_code">Postal Code</Label>
-                <Input
-                  id="postal_code"
-                  value={formData.postal_code}
-                  onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
-                  placeholder="e.g., 1212"
-                />
-              </div>
+
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Saving...' : editingId ? 'Update Address' : 'Add Address'}
@@ -391,7 +378,6 @@ export function UserAddressesList() {
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {getThanaName(address.thana_id)}, {getDistrictName(address.district_id)}, {getDivisionName(address.division_id)}
-                  {address.postal_code && ` ${address.postal_code}`}
                 </p>
 
                 {!address.is_default && (

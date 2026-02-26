@@ -12,12 +12,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Lock, CheckCircle } from 'lucide-react'
 import {
   divisions,
-  districtsByDivisionId,
+    districtsByDivisionId,
   thanasByDistrictId,
   getDivisionName,
   getDistrictName,
   getThanaName,
 } from '@/lib/geo-data'
+import { Label } from './ui/label'
 
 const DELIVERY_CHARGE_INSIDE_DHAKA = 60
 const DELIVERY_CHARGE_OUTSIDE_DHAKA = 120
@@ -31,7 +32,6 @@ interface UserAddress {
   thana_id: string
   area?: string
   full_address: string
-  postal_code?: string
   is_default: boolean
 }
 
@@ -48,15 +48,13 @@ export default function CheckoutClient() {
 
   // Form states
   const [formData, setFormData] = useState({
-    fullName: '',
-    phoneNumber: '',
-    email: '',
-    divisionId: '',
-    districtId: '',
-    thanaId: '',
+    full_name: '',
+    phone_number: '',
+    division_id: '',
+    district_id: '',
+    thana_id: '',
     area: '',
-    fullAddress: '',
-    postalCode: '',
+    full_address: '',
   })
 
   useEffect(() => {
@@ -117,14 +115,13 @@ export default function CheckoutClient() {
     if (!selected) return
     setFormData((prev) => ({
       ...prev,
-      fullName: selected.full_name,
-      phoneNumber: selected.phone_number,
-      divisionId: selected.division_id,
-      districtId: selected.district_id,
-      thanaId: selected.thana_id,
+      full_name: selected.full_name,
+      phone_number: selected.phone_number,
+      division_id: String(selected.division_id || ''),
+      district_id: String(selected.district_id || ''),
+      thana_id: String(selected.thana_id || ''),
       area: selected.area || '',
-      fullAddress: selected.full_address,
-      postalCode: selected.postal_code || '',
+      full_address: selected.full_address,
     }))
   }, [selectedAddressId, addresses])
 
@@ -132,7 +129,17 @@ export default function CheckoutClient() {
     const price = item.product?.discount_price ?? item.product?.price ?? 0
     return sum + price * (item.quantity || 1)
   }, 0)
-  const selectedDivisionName = formData.divisionId ? getDivisionName(formData.divisionId) : ''
+  const selectedDivisionName = formData.division_id ? getDivisionName(formData.division_id) : ''
+  const divisionExists = !!formData.division_id && divisions.some((div) => div.id === formData.division_id)
+  const districtExists =
+    !!formData.division_id &&
+    !!formData.district_id &&
+    districtsByDivisionId[formData.division_id]?.some((dist) => dist.id === formData.district_id)
+  const thanaExists =
+    !!formData.district_id &&
+    !!formData.thana_id &&
+    thanasByDistrictId[formData.district_id]?.some((thana) => thana.id === formData.thana_id)
+  const hasMissingGeo = selectedAddressId && (!divisionExists || !districtExists || !thanaExists)
   const deliveryCharge = selectedDivisionName ? (
     selectedDivisionName === 'Dhaka'
       ? DELIVERY_CHARGE_INSIDE_DHAKA
@@ -142,11 +149,11 @@ export default function CheckoutClient() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => {
-      if (field === 'divisionId') {
-        return { ...prev, divisionId: value, districtId: '', thanaId: '' }
+      if (field === 'division_id') {
+        return { ...prev, division_id: value, district_id: '', thana_id: '' }
       }
-      if (field === 'districtId') {
-        return { ...prev, districtId: value, thanaId: '' }
+      if (field === 'district_id') {
+        return { ...prev, district_id: value, thana_id: '' }
       }
       return { ...prev, [field]: value }
     })
@@ -154,27 +161,22 @@ export default function CheckoutClient() {
 
   const validateForm = () => {
     if (
-      !formData.fullName ||
-      !formData.phoneNumber ||
-      !formData.email ||
-      !formData.divisionId ||
-      !formData.districtId ||
-      !formData.thanaId ||
-      !formData.fullAddress
+      !formData.full_name ||
+      !formData.phone_number ||
+      !formData.division_id ||
+      !formData.district_id ||
+      !formData.thana_id ||
+      !formData.full_address
+
     ) {
-      toast.error('Please fill in all fields')
+      console.log('Validation failed:', formData)
+      toast.error('Please fill in all required fields')
       return false
     }
 
     const phoneRegex = /^01[0-9]{9}$/
-    if (!phoneRegex.test(formData.phoneNumber)) {
+    if (!phoneRegex.test(formData.phone_number)) {
       toast.error('Please enter a valid Bangladesh phone number')
-      return false
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(formData.email)) {
-      toast.error('Please enter a valid email')
       return false
     }
 
@@ -188,26 +190,24 @@ export default function CheckoutClient() {
 
   const isFormDifferent = (address: UserAddress) => {
     return (
-      address.full_name !== formData.fullName ||
-      address.phone_number !== formData.phoneNumber ||
-      address.division_id !== formData.divisionId ||
-      address.district_id !== formData.districtId ||
-      address.thana_id !== formData.thanaId ||
+      address.full_name !== formData.full_name ||
+      address.phone_number !== formData.phone_number ||
+      address.division_id !== formData.division_id ||
+      address.district_id !== formData.district_id ||
+      address.thana_id !== formData.thana_id ||
       (address.area || '') !== (formData.area || '') ||
-      address.full_address !== formData.fullAddress ||
-      (address.postal_code || '') !== (formData.postalCode || '')
+      address.full_address !== formData.full_address 
     )
   }
 
   const buildAddressPayload = () => ({
-    full_name: formData.fullName,
-    phone_number: formData.phoneNumber,
-    division_id: formData.divisionId,
-    district_id: formData.districtId,
-    thana_id: formData.thanaId,
+    full_name: formData.full_name,
+    phone_number: formData.phone_number,
+    division_id: formData.division_id,
+    district_id: formData.district_id,
+    thana_id: formData.thana_id,
     area: formData.area || null,
-    full_address: formData.fullAddress,
-    postal_code: formData.postalCode || null,
+    full_address: formData.full_address,
   })
 
   const ensureAddressSaved = async () => {
@@ -252,21 +252,20 @@ export default function CheckoutClient() {
   }
 
   const buildCheckoutAddress = () => {
-    const division = getDivisionName(formData.divisionId)
-    const district = getDistrictName(formData.districtId)
-    const thana = getThanaName(formData.thanaId)
-    const fullAddress = [formData.fullAddress, formData.area, formData.postalCode]
+    const division = getDivisionName(formData.division_id)
+    const district = getDistrictName(formData.district_id)
+    const thana = getThanaName(formData.thana_id)
+    const full_address = [formData.full_address, formData.area]
       .filter(Boolean)
       .join(', ')
 
     return {
-      fullName: formData.fullName,
-      phoneNumber: formData.phoneNumber,
-      email: formData.email,
+      full_name: formData.full_name,
+      phone_number: formData.phone_number,
       division,
       district,
       thana,
-      fullAddress,
+      full_address,
     }
   }
 
@@ -379,14 +378,13 @@ export default function CheckoutClient() {
                       setSelectedAddressId(null)
                       setFormData((prev) => ({
                         ...prev,
-                        fullName: '',
-                        phoneNumber: '',
-                        divisionId: '',
-                        districtId: '',
-                        thanaId: '',
+                        full_name: '',
+                        phone_number: '',
+                        division_id: '',
+                        district_id: '',
+                        thana_id: '',
                         area: '',
-                        fullAddress: '',
-                        postalCode: '',
+                        full_address: '',
                       }))
                     }}
                   >
@@ -423,7 +421,6 @@ export default function CheckoutClient() {
                           </p>
                           <p className="text-muted-foreground">
                             {getThanaName(addr.thana_id)}, {getDistrictName(addr.district_id)}, {getDivisionName(addr.division_id)}
-                            {addr.postal_code && ` ${addr.postal_code}`}
                           </p>
                         </div>
                       </label>
@@ -432,146 +429,142 @@ export default function CheckoutClient() {
                 )}
               </div>
 
-              <form className="space-y-4">
-                {/* Name and Phone */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">
-                      Full Name
-                    </label>
-                    <Input
-                      placeholder="Your full name"
-                      value={formData.fullName}
-                      onChange={(e) => handleInputChange('fullName', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">
-                      Phone Number
-                    </label>
-                    <Input
-                      placeholder="01xxxxxxxxx"
-                      value={formData.phoneNumber}
-                      onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                    />
-                  </div>
+              {hasMissingGeo && (
+                <div className="mb-4 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-900">
+                  <p className="font-medium">Location data missing</p>
+                  <p className="mt-1">
+                    This saved address uses old location IDs. Please reselect Division, District, and Thana.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-3"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        division_id: '',
+                        district_id: '',
+                        thana_id: '',
+                      }))
+                    }
+                  >
+                    Reset Location Fields
+                  </Button>
                 </div>
+              )}
 
-                {/* Email */}
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Email Address
-                  </label>
-                  <Input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                  />
-                </div>
+            <form className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="full_name">Full Name *</Label>
+                <Input
+                  id="full_name"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  required
+                />
+              </div>
 
-                {/* Division, District, Thana */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">
-                      Division
-                    </label>
-                    <Select
-                      value={formData.divisionId}
-                      onValueChange={(value) => handleInputChange('divisionId', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select division" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {divisions.map((div) => (
-                          <SelectItem key={div.id} value={div.id}>
-                            {div.name_en}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">
-                      District
-                    </label>
-                    <Select
-                      value={formData.districtId}
-                      onValueChange={(value) => handleInputChange('districtId', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select district" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {formData.divisionId &&
-                          districtsByDivisionId[formData.divisionId]?.map((dist) => (
-                            <SelectItem key={dist.id} value={dist.id}>
-                              {dist.name_en}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">
-                      Thana/Upazila
-                    </label>
-                    <Select
-                      value={formData.thanaId}
-                      onValueChange={(value) => handleInputChange('thanaId', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select thana" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {formData.districtId &&
-                          thanasByDistrictId[formData.districtId]?.map((thana) => (
-                            <SelectItem key={thana.id} value={thana.id}>
-                              {thana.name_en}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone_number">Phone Number *</Label>
+                <Input
+                  id="phone_number"
+                  value={formData.phone_number}
+                  onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                  required
+                />
+              </div>
 
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Area/Locality
-                  </label>
-                  <Input
-                    placeholder="e.g., Block C, House 10"
-                    value={formData.area}
-                    onChange={(e) => handleInputChange('area', e.target.value)}
-                  />
-                </div>
+              <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="division">Division *</Label>
+                <Select
+                  value={formData.division_id}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, division_id: value, district_id: '', thana_id: '' })
+                  }
+                >
+                  <SelectTrigger id="division">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {divisions.map((div) => (
+                      <SelectItem key={div.id} value={div.id}>
+                        {div.name_en}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                {/* Full Address */}
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Full Address
-                  </label>
-                  <textarea
-                    className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                    rows={3}
-                    placeholder="Enter your complete address"
-                    value={formData.fullAddress}
-                    onChange={(e) => handleInputChange('fullAddress', e.target.value)}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="district">District *</Label>
+                <Select
+                  value={formData.district_id}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, district_id: value, thana_id: '' })
+                  }
+                >
+                  <SelectTrigger id="district">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {formData.division_id &&
+                      districtsByDivisionId[formData.division_id]?.map((dist) => (
+                        <SelectItem key={dist.id} value={dist.id}>
+                          {dist.name_en}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              </div>
 
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Postal Code
-                  </label>
-                  <Input
-                    placeholder="e.g., 1212"
-                    value={formData.postalCode}
-                    onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                  />
-                </div>
-              </form>
+              <div className="space-y-2">
+                <Label htmlFor="thana">Thana/Upazila *</Label>
+              <Select
+                value={formData.thana_id}
+                onValueChange={(value) => setFormData({ ...formData, thana_id: value })}
+              >
+                <SelectTrigger id="thana">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  {formData.district_id &&
+                    thanasByDistrictId[formData.district_id]?.map((thana) => (
+                      <SelectItem key={thana.id} value={thana.id}>
+                        {thana.name_en}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+                </Select>
+              </div>
+              
+
+              <div className="space-y-2">
+                <Label htmlFor="area">Area/Locality</Label>
+                <Input
+                  id="area"
+                  value={formData.area}
+                  onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                  placeholder="e.g., Block C, House 10"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="full_address">Full Address *</Label>
+                <textarea
+                  id="full_address"
+                  value={formData.full_address}
+                  onChange={(e) => setFormData({ ...formData, full_address: e.target.value })}
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  rows={3}
+                  placeholder="Complete address details"
+                  required
+                />
+              </div>
+
+
+            </form>
             </CardContent>
           </Card>
 
@@ -672,9 +665,6 @@ export default function CheckoutClient() {
               <div className="p-4 bg-primary/5 border border-primary/10 rounded-lg text-xs text-muted-foreground space-y-2">
                 <p>
                   <strong>Note:</strong> Please ensure all details are correct before placing your order.
-                </p>
-                <p>
-                  You will receive an order confirmation via email and SMS.
                 </p>
               </div>
 

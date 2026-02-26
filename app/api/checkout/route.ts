@@ -10,12 +10,12 @@ interface CheckoutPayload {
   address: {
     fullName: string
     phoneNumber: string
-    email?: string
     division: string
     district: string
     thana: string
     fullAddress: string
   }
+  couponCode?: string
 }
 
 const DELIVERY_CHARGE_INSIDE_DHAKA = 60
@@ -87,7 +87,42 @@ export async function POST(request: NextRequest) {
       address.division === 'Dhaka'
         ? DELIVERY_CHARGE_INSIDE_DHAKA
         : DELIVERY_CHARGE_OUTSIDE_DHAKA
-    const total = subtotal + deliveryCharge
+    let discountAmount = 0
+    let total = subtotal + deliveryCharge
+
+    if (body.couponCode) {
+      const couponCode = String(body.couponCode).trim().toUpperCase()
+      const today = new Date().toISOString().slice(0, 10)
+
+      const { data: coupon, error: couponError } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('code', couponCode)
+        .eq('active', true)
+        .lte('valid_from', today)
+        .gte('valid_to', today)
+        .maybeSingle()
+
+      if (couponError || !coupon) {
+        return NextResponse.json({ error: 'Invalid or expired coupon' }, { status: 400 })
+      }
+
+      if (coupon.min_purchase_amount && subtotal < coupon.min_purchase_amount) {
+        return NextResponse.json({ error: 'Minimum purchase amount not met' }, { status: 400 })
+      }
+
+      discountAmount = (subtotal * Number(coupon.discount_percent)) / 100
+      if (coupon.max_discount_amount && discountAmount > coupon.max_discount_amount) {
+        discountAmount = Number(coupon.max_discount_amount)
+      }
+
+      const { error: usageError } = await supabase.rpc('increment_coupon_usage', { coupon_id: coupon.id })
+      if (usageError) {
+        return NextResponse.json({ error: 'Coupon usage limit reached' }, { status: 400 })
+      }
+
+      total = subtotal + deliveryCharge - discountAmount
+    }
 
     const orderNumber = generateOrderReference()
 
@@ -98,6 +133,7 @@ export async function POST(request: NextRequest) {
         user_id: authData.user.id,
         subtotal,
         delivery_charge: deliveryCharge,
+        discount_amount: discountAmount,
         total_amount: total,
         payment_method: paymentMethod,
         payment_status: 'pending',
@@ -154,12 +190,11 @@ export async function POST(request: NextRequest) {
         amount: total,
         orderId: order.order_number,
         customerName: address.fullName,
-        customerEmail: address.email || authData.user.email || 'customer@example.com',
+        // customerEmail: address.email || authData.user.email || 'customer@example.com',
         customerPhone: address.phoneNumber,
         customerAddress: address.fullAddress,
         customerCity: address.district,
         customerState: address.division,
-        customerPostcode: '',
         description: 'Fashion Accessories',
       }),
     })

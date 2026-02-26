@@ -84,6 +84,13 @@ export default function AdminProductsList({ products }: AdminProductsListProps) 
                     >
                       {product.stock_quantity}
                     </Badge>
+                    {product.low_stock_threshold !== undefined &&
+                      product.stock_quantity <= product.low_stock_threshold &&
+                      product.stock_quantity > 0 && (
+                        <Badge className="ml-2 bg-yellow-100 text-yellow-800">
+                          Low Stock
+                        </Badge>
+                      )}
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex gap-1 justify-center">

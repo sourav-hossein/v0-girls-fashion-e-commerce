@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       .eq('user_id', userData.user.id)
       .order('is_default', { ascending: false })
       .order('created_at', { ascending: false })
-
+ 
     if (error) throw error
 
     return NextResponse.json(data)

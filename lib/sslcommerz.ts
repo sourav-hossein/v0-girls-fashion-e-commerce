@@ -5,12 +5,11 @@ export interface SSLCommerzInitParams {
   amount: number
   orderId: string
   customerName: string
-  customerEmail: string
+  // customerEmail: string
   customerPhone: string
   customerAddress: string
   customerCity: string
   customerState: string
-  customerPostcode: string
   currency?: string
   description?: string
 }

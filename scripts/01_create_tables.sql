@@ -82,7 +82,6 @@ CREATE TABLE user_addresses (
   thana_id TEXT NOT NULL,
   area VARCHAR(255),
   full_address TEXT NOT NULL,
-  postal_code VARCHAR(20),
   is_default BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

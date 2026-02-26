@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Eye, Edit } from 'lucide-react'
+import { Eye } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -35,12 +35,19 @@ export default function AdminOrdersList({ orders }: AdminOrdersListProps) {
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     setIsSaving(orderId)
     try {
-      // In a real app, update order status
-      // await updateOrderStatus(orderId, newStatus)
+      const response = await fetch(`/api/admin/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data?.error || 'Failed to update order')
+      }
       setSelectedStatus((prev) => ({ ...prev, [orderId]: newStatus }))
       toast.success('Order status updated')
     } catch (error) {
-      toast.error('Failed to update order')
+      toast.error(error instanceof Error ? error.message : 'Failed to update order')
     } finally {
       setIsSaving(null)
     }
@@ -52,10 +59,15 @@ export default function AdminOrdersList({ orders }: AdminOrdersListProps) {
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-950'
       case 'confirmed':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-950'
+      case 'processing':
+        return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950'
       case 'shipped':
         return 'bg-purple-100 text-purple-800 dark:bg-purple-950'
       case 'delivered':
         return 'bg-green-100 text-green-800 dark:bg-green-950'
+      case 'cancelled':
+      case 'failed':
+        return 'bg-red-100 text-red-800 dark:bg-red-950'
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-950'
     }
@@ -106,13 +118,16 @@ export default function AdminOrdersList({ orders }: AdminOrdersListProps) {
                       <SelectTrigger className="w-32 h-8 text-sm">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="confirmed">Confirmed</SelectItem>
-                        <SelectItem value="shipped">Shipped</SelectItem>
-                        <SelectItem value="delivered">Delivered</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="processing">Processing</SelectItem>
+                      <SelectItem value="shipped">Shipped</SelectItem>
+                      <SelectItem value="delivered">Delivered</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
                   </TableCell>
                   <TableCell>
                     <Badge className={getPaymentColor(order.payment_status)}>
@@ -133,15 +148,7 @@ export default function AdminOrdersList({ orders }: AdminOrdersListProps) {
                           <Eye className="w-4 h-4" />
                         </Button>
                       </Link>
-                      <Link href={`/admin/orders/${order.id}/edit`}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </Link>
+                      {/* Edit page not implemented */}
                     </div>
                   </TableCell>
                 </TableRow>
