@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono, Cormorant_Garamond } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import Script from 'next/script'
 import { ThemeProvider } from '@/components/theme-provider'
 import { LanguageProvider } from '@/components/language-provider'
 import { Toaster } from 'sonner'
 import AnalyticsSession from '@/components/analytics-session'
+import { createAdminSupabaseClient } from '@/lib/supabase-admin'
 import './globals.css'
 
 const geist = Geist({ subsets: ["latin"] });
@@ -48,15 +50,29 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({
+export const revalidate = 0
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const supabase = await createAdminSupabaseClient()
+  const { data } = await supabase
+    .from('store_settings')
+    .select('theme')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const theme = data?.theme ?? 'rose'
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-theme={theme}>
       <body className={`${geist.className} ${geistMono.variable} ${cormorant.variable} font-sans antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <Script id="brand-theme" strategy="beforeInteractive">
+          {`document.documentElement.setAttribute('data-theme', '${theme}')`}
+        </Script>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <LanguageProvider>
             <AnalyticsSession />
             {children}

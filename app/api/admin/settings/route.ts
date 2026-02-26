@@ -75,6 +75,10 @@ export async function PATCH(request: Request) {
   if (!auth.ok) return auth.response
 
   const payload = await request.json().catch(() => ({}))
+  const allowedThemes = ['rose', 'lavender', 'ocean'] as const
+  if ('theme' in payload && !allowedThemes.includes(payload.theme)) {
+    return NextResponse.json({ error: 'Invalid theme value' }, { status: 400 })
+  }
   const supabase = await createAdminSupabaseClient()
 
   const updatePayload: Record<string, any> = {
@@ -98,6 +102,7 @@ export async function PATCH(request: Request) {
     'cod_enabled',
     'sslcommerz_enabled',
     'low_stock_default_threshold',
+    'theme',
   ]
 
   for (const field of allowedFields) {

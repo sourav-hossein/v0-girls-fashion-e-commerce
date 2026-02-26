@@ -7,6 +7,13 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { toast } from 'sonner'
 
 type StoreSettings = {
@@ -27,6 +34,7 @@ type StoreSettings = {
   sslcommerz_enabled?: boolean | null
   order_notification_emails?: string[] | null
   low_stock_default_threshold?: number | null
+  theme?: 'rose' | 'lavender' | 'ocean' | null
 }
 
 const emptySettings: StoreSettings = {
@@ -47,6 +55,7 @@ const emptySettings: StoreSettings = {
   sslcommerz_enabled: true,
   order_notification_emails: [],
   low_stock_default_threshold: 10,
+  theme: 'rose',
 }
 
 export default function AdminSettingsForm() {
@@ -112,6 +121,27 @@ export default function AdminSettingsForm() {
           <CardTitle>Store Profile</CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
+          <div className="space-y-2">
+            <Label>Brand Theme</Label>
+            <Select
+              value={settings.theme || 'rose'}
+              onValueChange={(value: 'rose' | 'lavender' | 'ocean') =>
+                setSettings({ ...settings, theme: value })
+              }
+            >
+              <SelectTrigger className="w-full md:w-72">
+                <SelectValue placeholder="Select theme" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rose">Rose</SelectItem>
+                <SelectItem value="lavender">Lavender</SelectItem>
+                <SelectItem value="ocean">Ocean</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Theme presets are managed globally. Users can only toggle dark mode.
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Store Name</Label>

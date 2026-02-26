@@ -4,76 +4,68 @@ import { Moon, Sun, Globe } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useLanguage } from '@/components/language-provider'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
   DropdownMenuLabel,
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
+import { useEffect, useState } from 'react'
 
 export function ThemeLanguageToggle() {
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
   const { language, setLanguage } = useLanguage()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const isDark = resolvedTheme === 'dark'
 
   return (
     <div className="flex items-center gap-2">
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Theme & Language Settings</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel className="text-xs uppercase font-semibold text-muted-foreground">Theme</DropdownMenuLabel>
-        <DropdownMenuCheckboxItem
-          checked={theme === 'light'}
-          onCheckedChange={() => setTheme('light')}
+      <div className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5">
+        <Sun className="h-4 w-4 text-muted-foreground" />
+        {mounted ? (
+          <Switch
+            checked={isDark}
+            onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+            aria-label="Toggle dark mode"
+          />
+        ) : (
+          <span className="h-5 w-9 rounded-full border border-border bg-muted" />
+        )}
+        <Moon className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon">
+            <Globe className="w-4 h-4" />
+            <span className="sr-only">Language Settings</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuLabel className="text-xs uppercase font-semibold text-muted-foreground">
+            Language
+          </DropdownMenuLabel>
+          <DropdownMenuCheckboxItem
+            checked={language === 'en'}
+            onCheckedChange={() => setLanguage('en')}
+            className="flex items-center gap-2"
           >
-          Light
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuCheckboxItem
-          checked={theme === 'dark'}
-          onCheckedChange={() => setTheme('dark')}
+            English
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem
+            checked={language === 'bn'}
+            onCheckedChange={() => setLanguage('bn')}
           >
-          Dark
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuCheckboxItem
-          checked={theme === 'system'}
-          onCheckedChange={() => setTheme('system')}
-          >
-          System
-        </DropdownMenuCheckboxItem> 
-      </DropdownMenuContent>
-    </DropdownMenu>
-        <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Globe className="w-4 h-4" />
-          <span className="sr-only">Language Settings</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">        
-        <DropdownMenuLabel className="text-xs uppercase font-semibold text-muted-foreground">Language</DropdownMenuLabel>
-        <DropdownMenuCheckboxItem
-          checked={language === 'en'}
-          onCheckedChange={() => setLanguage('en')}
-          className="flex items-center gap-2"
-          >
-          English
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuCheckboxItem
-          checked={language === 'bn'}
-          onCheckedChange={() => setLanguage('bn')}
-          >
-          বাংলা (Bengali)
-        </DropdownMenuCheckboxItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-          </div>
+            à¦¬à¦¾à¦‚à¦²à¦¾ (Bengali)
+          </DropdownMenuCheckboxItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   )
 }
