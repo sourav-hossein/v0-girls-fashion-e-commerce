@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     },
   )
 
-  const fullName =
+  const full_name =
     user.user_metadata?.full_name ||
     user.user_metadata?.name ||
     null
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
   await adminClient.from('profiles').upsert(
     {
       id: user.id,
-      full_name: fullName,
+      full_name: full_name,
       profile_photo_url: profilePhotoUrl,
     },
     { onConflict: 'id' },

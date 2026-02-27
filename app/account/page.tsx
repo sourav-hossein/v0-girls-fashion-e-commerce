@@ -20,7 +20,7 @@ export default function AccountDashboard() {
   })
   const [userData, setUserData] = useState({
     id: '',
-    fullName: '',
+    full_name: '',
     email: '',
     phoneNumber: '',
   })
@@ -43,14 +43,14 @@ export default function AccountDashboard() {
         if (!profileError && profile) {
           setUserData({
             id: profile.id,
-            fullName: profile.full_name || '',
+            full_name: profile.full_name || '',
             email: authData.user.email || '',
             phoneNumber: profile.phone_number || '',
           })
         } else {
           setUserData({
             id: authData.user.id,
-            fullName: authData.user.user_metadata?.full_name || '',
+            full_name: authData.user.user_metadata?.full_name || '',
             email: authData.user.email || '',
             phoneNumber: '',
           })
@@ -94,7 +94,7 @@ export default function AccountDashboard() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          full_name: userData.fullName,
+          full_name: userData.full_name,
           phone_number: userData.phoneNumber,
         })
         .eq('id', userData.id)
@@ -159,9 +159,9 @@ export default function AccountDashboard() {
                 Full Name
               </label>
               <Input
-                value={userData.fullName}
+                value={userData.full_name}
                 onChange={(e) =>
-                  setUserData({ ...userData, fullName: e.target.value })
+                  setUserData({ ...userData, full_name: e.target.value })
                 }
                 disabled={!isEditing}
                 className={isEditing ? '' : 'bg-muted border-muted'}

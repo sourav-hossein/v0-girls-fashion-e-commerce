@@ -36,12 +36,12 @@ export async function POST(request: NextRequest) {
     if (order?.id) {
       await supabase
         .from('orders')
-        .update({ payment_status: 'failed', status: 'canceled' })
+        .update({ payment_status: 'failed', status: 'cancelled' })
         .eq('id', order.id)
 
       await supabase
         .from('payment_logs')
-        .update({ status: 'canceled' })
+        .update({ status: 'cancelled' })
         .eq('order_id', order.id)
     }
 

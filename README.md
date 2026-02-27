@@ -160,7 +160,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Database Schema
 
 ### Core Tables
-- **users**: User profiles with address information
+- **profiles**: User profiles with address information
 - **categories**: Product categories
 - **products**: Product listings with pricing
 - **product_images**: Multiple images per product
@@ -188,7 +188,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
 
-### Protected (Authenticated Users)
+### Protected (Authenticated profiles)
 - `GET/POST/DELETE /api/cart` - Manage shopping cart
 - `GET/POST/DELETE /api/wishlist` - Manage wishlist
 - `POST /api/checkout` - Create order
@@ -213,7 +213,7 @@ The platform integrates with SSLCommerz for secure payments in Bangladesh.
 
 ## Admin Access
 
-Set a user's role to `admin` in the `users` table to grant admin access.
+Set a user's role to `admin` in the `profiles` table to grant admin access.
 
 ## Deployment
 

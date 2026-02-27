@@ -88,7 +88,7 @@ export const translations = {
     alreadyHaveAccount: 'Already have an account?',
     
     // Profile
-    fullName: 'Full Name',
+    full_name: 'Full Name',
     profilePhoto: 'Profile Photo',
     uploadPhoto: 'Upload Photo',
     myProfile: 'My Profile',
@@ -211,7 +211,7 @@ export const translations = {
     alreadyHaveAccount: 'ইতিমধ্যে অ্যাকাউন্ট আছে?',
     
     // Profile
-    fullName: 'সম্পূর্ণ নাম',
+    full_name: 'সম্পূর্ণ নাম',
     profilePhoto: 'প্রোফাইল ফটো',
     uploadPhoto: 'ফটো আপলোড করুন',
     myProfile: 'আমার প্রোফাইল',

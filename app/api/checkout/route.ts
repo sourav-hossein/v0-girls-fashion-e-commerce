@@ -9,7 +9,7 @@ type PaymentMethod = 'sslcommerz' | 'cod'
 interface CheckoutPayload {
   paymentMethod: PaymentMethod
   address: {
-    fullName: string
+    full_name: string
     phoneNumber: string
     division: string
     district: string
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     const { paymentMethod, address } = body
     const requiredFields = [
-      address.fullName,
+      address.full_name,
       address.phoneNumber,
       address.division,
       address.district,
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         amount: total,
         orderId: order.order_number,
-        customerName: address.fullName,
+        customerName: address.full_name,
         // customerEmail: address.email || authData.user.email || 'customer@example.com',
         customerPhone: address.phoneNumber,
         customerAddress: address.fullAddress,

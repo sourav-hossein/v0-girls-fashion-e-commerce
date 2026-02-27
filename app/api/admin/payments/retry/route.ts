@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { createAdminSupabaseClient } from '@/lib/supabase-admin'
+import { getDistrictName, getDivisionName, getThanaName } from '@/lib/geo-data'
 
 async function requireAdminApi() {
   const cookieStore = await cookies()
@@ -79,15 +80,20 @@ export async function POST(request: Request) {
     .single()
 
   const origin = new URL(request.url).origin
+  const divisionName = address?.division ? getDivisionName(address.division) : 'Dhaka'
+  const districtName = address?.district ? getDistrictName(address.district) : 'Dhaka'
+  const thanaName = address?.thana ? getThanaName(address.thana) : ''
+  const customerAddress = address?.full_address || 'N/A'
+
   const payload = {
     amount: order.total_amount,
     orderId: order.order_number,
     customerName: profile?.full_name || 'Customer',
     customerEmail: 'customer@example.com',
     customerPhone: address?.phone_number || profile?.phone_number || '01000000000',
-    customerAddress: address?.full_address || 'N/A',
-    customerCity: address?.district || 'Dhaka',
-    customerState: address?.division || 'Dhaka',
+    customerAddress: thanaName ? `${customerAddress}, ${thanaName}` : customerAddress,
+    customerCity: districtName,
+    customerState: divisionName,
     description: 'Payment retry',
   }
 

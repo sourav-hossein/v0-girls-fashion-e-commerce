@@ -225,6 +225,9 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 CREATE POLICY IF NOT EXISTS "Users can see their own orders" ON orders
   FOR SELECT USING (auth.uid() = user_id);
 
+CREATE POLICY IF NOT EXISTS "Users can create their own orders" ON orders
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
 -- =========================
 -- 10. ORDER_ITEMS
 -- =========================
@@ -242,6 +245,14 @@ ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY IF NOT EXISTS "Users can see items from their orders" ON order_items
   FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM orders
+      WHERE orders.id = order_id AND orders.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY IF NOT EXISTS "Users can create items for their orders" ON order_items
+  FOR INSERT WITH CHECK (
     EXISTS (
       SELECT 1 FROM orders
       WHERE orders.id = order_id AND orders.user_id = auth.uid()
@@ -266,6 +277,14 @@ ALTER TABLE order_addresses ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY IF NOT EXISTS "Users can see addresses from their orders" ON order_addresses
   FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM orders
+      WHERE orders.id = order_id AND orders.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY IF NOT EXISTS "Users can create addresses for their orders" ON order_addresses
+  FOR INSERT WITH CHECK (
     EXISTS (
       SELECT 1 FROM orders
       WHERE orders.id = order_id AND orders.user_id = auth.uid()
@@ -324,6 +343,8 @@ CREATE POLICY IF NOT EXISTS "Everyone can see active coupons" ON coupons
 CREATE OR REPLACE FUNCTION increment_coupon_usage(coupon_id UUID)
 RETURNS VOID
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
   UPDATE coupons
@@ -350,10 +371,22 @@ CREATE TABLE IF NOT EXISTS payment_logs (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+ALTER TABLE payment_logs
+  ADD CONSTRAINT payment_logs_status_check
+  CHECK (status IN ('pending','initiated','completed','failed','cancelled'));
+
 ALTER TABLE payment_logs ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY IF NOT EXISTS "Users can see payment logs for their orders" ON payment_logs
   FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM orders
+      WHERE orders.id = order_id AND orders.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY IF NOT EXISTS "Users can create payment logs for their orders" ON payment_logs
+  FOR INSERT WITH CHECK (
     EXISTS (
       SELECT 1 FROM orders
       WHERE orders.id = order_id AND orders.user_id = auth.uid()
@@ -575,6 +608,9 @@ CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_products_featured ON products(featured) WHERE featured = TRUE;
 CREATE INDEX IF NOT EXISTS idx_products_trending ON products(trending) WHERE trending = TRUE;
 CREATE INDEX IF NOT EXISTS idx_cart_user ON cart(user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_cart_user_product_null_variant
+  ON cart(user_id, product_id)
+  WHERE variant_id IS NULL;
 CREATE INDEX IF NOT EXISTS idx_user_addresses_user ON user_addresses(user_id);
 CREATE INDEX IF NOT EXISTS idx_wishlists_user ON wishlists(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
