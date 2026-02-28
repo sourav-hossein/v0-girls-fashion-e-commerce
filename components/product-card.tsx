@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -10,6 +10,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { addToCart, CartAuthError } from '@/lib/cart-api'
 import { trackEvent } from '@/lib/analytics-client'
+import { useT } from '@/hooks/use-t'
 
 interface ProductCardProps {
   product: Product
@@ -17,6 +18,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, image }: ProductCardProps) {
+  const { t } = useT()
   const router = useRouter()
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [isWishlistLoading, setIsWishlistLoading] = useState(false)
@@ -37,7 +39,7 @@ export default function ProductCard({ product, image }: ProductCardProps) {
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-              <span className="text-4xl">Ã°Å¸â€ºÂÃ¯Â¸Â</span>
+              <span className="text-4xl">*</span>
             </div>
           )}
 
@@ -49,7 +51,7 @@ export default function ProductCard({ product, image }: ProductCardProps) {
 
           {product.stock_quantity === 0 && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <p className="text-white font-semibold">Out of Stock</p>
+              <p className="text-white font-semibold">{t('product.outOfStock')}</p>
             </div>
           )}
         </div>
@@ -73,13 +75,13 @@ export default function ProductCard({ product, image }: ProductCardProps) {
             .then(async (response) => {
               const data = await response.json()
               if (!response.ok) {
-                throw new Error(data.error || 'Wishlist update failed')
+                throw new Error(data.error || t('product.wishlistUpdateFailed'))
               }
               setIsWishlisted(nextState)
-              toast.success(nextState ? 'Added to wishlist' : 'Removed from wishlist')
+              toast.success(nextState ? t('product.addedToWishlist') : t('product.removedFromWishlist'))
             })
             .catch((error) => {
-              toast.error(error.message || 'Wishlist update failed')
+              toast.error(error.message || t('product.wishlistUpdateFailed'))
             })
             .finally(() => {
               setIsWishlistLoading(false)
@@ -87,7 +89,7 @@ export default function ProductCard({ product, image }: ProductCardProps) {
         }}
         disabled={isWishlistLoading}
         className="absolute top-3 left-3 z-10 p-2 bg-white/90 hover:bg-primary hover:text-primary-foreground rounded-full transition-colors"
-        aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+        aria-label={isWishlisted ? t('common.removeFromWishlist') : t('common.addToWishlist')}
       >
         <Heart
           className="w-4 h-4"
@@ -112,20 +114,20 @@ export default function ProductCard({ product, image }: ProductCardProps) {
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-primary">
             {product.discount_price
-              ? `Ã Â§Â³${product.discount_price}`
-              : `Ã Â§Â³${product.price}`}
+              ? `৳${product.discount_price}`
+              : `৳${product.price}`}
           </span>
           {product.discount_price && (
             <span className="text-sm text-muted-foreground line-through">
-              Ã Â§Â³{product.price}
+              ৳{product.price}
             </span>
           )}
         </div>
 
         <p className="text-xs text-muted-foreground">
           {product.stock_quantity > 0
-            ? `${product.stock_quantity} in stock`
-            : 'Out of stock'}
+            ? `${product.stock_quantity} ${t('product.inStock')}`
+            : t('product.outOfStock')}
         </p>
 
         <Button
@@ -136,14 +138,14 @@ export default function ProductCard({ product, image }: ProductCardProps) {
             try {
               await addToCart({ productId: product.id, quantity: 1 })
               trackEvent('add_to_cart', { product_id: product.id, path: `/product/${product.slug}` })
-              toast.success('Added to cart')
+              toast.success(t('product.addedToCart'))
             } catch (error) {
               if (error instanceof CartAuthError) {
                 toast.error(error.message)
                 router.push('/auth/login')
                 return
               }
-              toast.error(error instanceof Error ? error.message : 'Failed to add to cart')
+              toast.error(error instanceof Error ? error.message : t('product.addToCartFailed'))
             } finally {
               setIsCartLoading(false)
             }
@@ -152,7 +154,7 @@ export default function ProductCard({ product, image }: ProductCardProps) {
           className="w-full bg-primary hover:bg-primary/90 text-primary-foreground gap-2 mt-auto"
         >
           <ShoppingCart className="w-4 h-4" />
-          <span>{isCartLoading ? 'Adding...' : 'Add to Cart'}</span>
+          <span>{isCartLoading ? t('common.adding') : t('common.addToCart')}</span>
         </Button>
       </div>
     </Card>

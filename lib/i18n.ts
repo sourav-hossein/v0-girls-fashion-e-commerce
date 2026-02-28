@@ -1,5 +1,5 @@
-import en from './i18n/en.json'
-import bn from './i18n/bn.json'
+import en from './i18n/en'
+import bn from './i18n/bn'
 
 export type Language = 'en' | 'bn'
 

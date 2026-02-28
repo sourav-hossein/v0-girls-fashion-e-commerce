@@ -152,15 +152,13 @@ export default function ProductDetailClient({
         {/* Images */}
         <div className="space-y-4">
           <div className="aspect-square bg-muted rounded-2xl overflow-hidden flex items-center justify-center">
-            {activeImage?.image_url ? (
+            {
               <img
-                src={activeImage.image_url}
-                alt={activeImage.alt_text || product.name}
+                src={activeImage?.image_url || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKwAAACUCAMAAAA5xjIqAAAA3lBMVEX////x7+Lf3dA7g4JNo6Tp6ens7Ozy8vJfX2FFR0h6fHxISUxqamvg39Xj4dQ5OTvX1ck/PkCCgn8yMjUoKS1MmptCe3rTpUdiYmH1u1BxcnHttk9NTlBBjIvx7uUwfn48nJ2trqqhoJ3Q0c0eHiK+vr7d3dxWV1bIyMGMjI7Bv7b16c315sP026rtu1nbvnvzzYrTnznSplHXrmLhxIznyojwwGjwxnn07tj1uETp1qzR2tGFraZVjYihvLdil5K6y8PK4dqOwb9srauy0srf6uFSXmA6S0xAampVdndhYC+IAAADS0lEQVR4nO3ai1aiQBzH8bhsRsQgYalFo922m12strVQUsq2ff8X2oEUUUeZzpmBcc//+wSffmcc8cTaGgRBEARBEARBEARBEARBEARBEATxrnS4zdwmc0frIqzHjm0YhsOWW2HKdd3KySl/688z0/MMZ2OPqa0aS17Fjv6yY+7YI8fzzLNzjJXssKKWWVLPz1zHqVzwtpa2Dc+sMUC/QipTCNdsx67xPralTcNzLnljVXRJsBsisBtl/thyzRaCNbYs7li1vOWuElbMsiZgAQtYwAIWsP8LFitXrSuF8ogrI/b6pr5frd5erQC2c/dcj7Dt+5b0WHxXr8fYavWhIzu29Zxg249YcuyvCbZ6L/my+Kk+wbY7cmOVVcLi36uEvU59wB4kP7NK52aCfWHBImRZCBWDVV5uxthHJRuL/K7WaPSCgrBK6+n5eb/dnrdSsMh/bWga4XZRMVilc333dPs4/2hAWza2RvVRMVjaAxcNa6moO7Y2XgtadmGzy06sRJueVkIs6muTpqaVDztlJdoAyYtFvtaY1vrFYTN+1owuLfq0smHV7oxV03o+KgpLGgThANOx1rxVa3StwrDDsEkKMQ2LgnkrybcKwg7fmjqpGVKwMxfB5PpCxWAH+qiUdkSxUL9HxSbfDDljg6ae9D677NxFkPRawLI4TFn15nAaixZaNe3r+soPi8fHNeltmMbSLoLkHPT8nJf1m9NWvTnSxliLfhGMtUG+2PcZaqxNsChYQo2ycsGO/jUezlEjbRB9o0VYf9mu0bTRb4aclp09romWXAmYMPyDjGHj3wz5YAdUadwgWnbxpZWaVkW5YN8XW3V9qCC05CJIT5sDdhjSj8BEy2QlX7risYuOa1K49NJKafuqaOxAz7DqevaH6wvbswRjlx7X72HJZ2xPJDbruH4Pq+1+CMRmHtfvYv+IeaGHYLHPZpUCS3kYkBTr1bqsVgmwHzusVgmwngisIQhr7vLHfjqiljUPeGPJsAKwaxeOR7R/d9jSdpn6jF8M3izxxp6SZSMuW47NVPwWc+WQt5VM65oec4xvW0ed7HEflnTkOYy7mqbtsmZzfy951PoP/gmiQhAEQRAEQRAEQRAEQRAEQRAEQdz7B8uxwA5hpAHmAAAAAElFTkSuQmCC"}
+                alt={activeImage?.alt_text || product.name}
                 className="w-full h-full object-cover"
               />
-            ) : (
-              <div className="text-6xl">Ã°Å¸â€ºÂÃ¯Â¸Â</div>
-            )}
+            }
           </div>
           {images.length > 1 && (
             <div className="grid grid-cols-4 gap-3">
@@ -222,12 +220,12 @@ export default function ProductDetailClient({
           <div className="space-y-2">
             <div className="flex items-baseline gap-3">
               <span className="text-4xl font-bold text-primary">
-                Ã Â§Â³{product.discount_price || product.price}
+                {product.discount_price || product.price}
               </span>
               {product.discount_price && (
                 <>
                   <span className="text-xl text-muted-foreground line-through">
-                    Ã Â§Â³{product.price}
+                    {product.price}
                   </span>
                   <span className="text-lg font-bold text-accent">
                     Save {discount}%
@@ -274,21 +272,23 @@ export default function ProductDetailClient({
           <div>
             <h3 className="font-semibold text-foreground mb-3">Quantity</h3>
             <div className="flex items-center gap-3 w-fit border border-border rounded-lg p-1">
-              <button
+              <Button 
+                variant={'ghost'}
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="px-4 py-2 hover:bg-muted transition-colors"
+                className="px-4 py-2 hover:bg-muted transition-colors cursor-pointer"
               >
-                Ã¢Ë†â€™
-              </button>
+                -
+              </Button>
               <span className="px-4 py-2 font-semibold">{quantity}</span>
-              <button
+              <Button
+                variant={'ghost'}
                 onClick={() =>
                   setQuantity(Math.min(Math.max(availableStock, 1), quantity + 1))
                 }
                 className="px-4 py-2 hover:bg-muted transition-colors"
               >
                 +
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -297,10 +297,10 @@ export default function ProductDetailClient({
             <Button
               onClick={handleAddToCart}
               disabled={availableStock === 0 || isLoading}
-              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground gap-2 h-12"
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground gap-2 h-12 cursor-pointer"
             >
               <ShoppingCart className="w-5 h-5" />
-              <span>Add to Cart</span>
+              Add to Cart
             </Button>
             <Button
               onClick={handleAddToWishlist}

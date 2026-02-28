@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { CartAuthError, getCart, removeCartItem, updateCartItem } from '@/lib/cart-api'
+import { useT } from '@/hooks/use-t'
 
 interface CartItem {
   id: string
@@ -34,6 +35,7 @@ const DELIVERY_CHARGE_INSIDE_DHAKA = 60
 const DELIVERY_CHARGE_OUTSIDE_DHAKA = 120
 
 export default function CartClient() {
+  const { t } = useT()
   const router = useRouter()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [couponCode, setCouponCode] = useState('')
@@ -97,25 +99,25 @@ export default function CartClient() {
     try {
       await removeCartItem(id)
       setCartItems(cartItems.filter((item) => item.id !== id))
-      toast.success('Item removed from cart')
+      toast.success(t('cart.itemRemoved'))
     } catch (error) {
       if (error instanceof CartAuthError) {
         toast.error(error.message)
         router.push('/auth/login')
         return
       }
-      toast.error(error instanceof Error ? error.message : 'Failed to remove item')
+      toast.error(error instanceof Error ? error.message : t('cart.removeFailed'))
     }
   }
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
-      toast.error('Please enter a coupon code')
+      toast.error(t('cart.enterCoupon'))
       return
     }
 
     setDiscountPercent(10)
-    toast.success('Coupon applied!')
+    toast.success(t('cart.couponApplied'))
     setCouponCode('')
   }
 
@@ -123,7 +125,7 @@ export default function CartClient() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="h-96 flex items-center justify-center">
-          <p className="text-muted-foreground">Loading cart...</p>
+          <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
     )
@@ -136,14 +138,14 @@ export default function CartClient() {
           <CardContent className="p-12 text-center">
             <ShoppingBag className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-2xl font-serif font-bold text-foreground mb-2">
-              Please log in to view your cart
+              {t('cart.loginRequiredTitle')}
             </h2>
             <p className="text-muted-foreground mb-6">
-              You need an account to keep your cart in sync.
+              {t('cart.loginRequiredBody')}
             </p>
             <Link href="/auth/login">
               <Button className="bg-primary hover:bg-primary/90">
-                Log In
+                {t('nav.login')}
               </Button>
             </Link>
           </CardContent>
@@ -155,7 +157,7 @@ export default function CartClient() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-4xl font-serif font-bold text-foreground mb-8">
-        Shopping Cart
+        {t('cart.title')}
       </h1>
 
       {cartItems.length === 0 ? (
@@ -163,14 +165,14 @@ export default function CartClient() {
           <CardContent className="p-12 text-center">
             <ShoppingBag className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-2xl font-serif font-bold text-foreground mb-2">
-              Your cart is empty
+              {t('cart.empty')}
             </h2>
             <p className="text-muted-foreground mb-6">
-              Start shopping to add items to your cart
+              {t('cart.emptyHint')}
             </p>
             <Link href="/shop">
               <Button className="bg-primary hover:bg-primary/90">
-                Continue Shopping
+                {t('common.continueShopping')}
               </Button>
             </Link>
           </CardContent>
@@ -183,13 +185,13 @@ export default function CartClient() {
                 <CardContent className="p-6">
                   <div className="flex gap-6">
                     <div className="w-24 h-24 bg-muted rounded-lg flex-shrink-0 flex items-center justify-center">
-                      <span className="text-2xl">ðŸ›ï¸</span>
+                      <span className="text-2xl">*</span>
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <Link href={item.product?.slug ? `/product/${item.product.slug}` : '#'}>
                         <h3 className="font-semibold text-foreground hover:text-primary transition-colors truncate">
-                          {item.product?.name || 'Product'}
+                          {item.product?.name || t('product.generic')}
                         </h3>
                       </Link>
                       {item.variant ? (
@@ -198,7 +200,7 @@ export default function CartClient() {
                         </p>
                       ) : null}
                       <p className="text-lg font-bold text-primary mt-2">
-                        à§³{item.product?.discount_price ?? item.product?.price ?? 0}
+                        ৳{item.product?.discount_price ?? item.product?.price ?? 0}
                       </p>
                     </div>
 
@@ -235,16 +237,16 @@ export default function CartClient() {
           <div className="h-fit">
             <Card className="border-border sticky top-20">
               <CardHeader className="border-b border-border">
-                <CardTitle>Order Summary</CardTitle>
+                <CardTitle>{t('cart.orderSummary')}</CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    Coupon Code
+                    {t('cart.coupon')}
                   </label>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="Enter code"
+                      placeholder={t('cart.enterCode')}
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value)}
                       className="text-sm"
@@ -254,14 +256,14 @@ export default function CartClient() {
                       variant="outline"
                       className="px-3"
                     >
-                      Apply
+                      {t('cart.apply')}
                     </Button>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    Delivery Location
+                    {t('cart.deliveryLocation')}
                   </label>
                   <div className="space-y-2">
                     <label className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors">
@@ -273,7 +275,9 @@ export default function CartClient() {
                           setLocation(e.target.value as 'dhaka' | 'outside')
                         }
                       />
-                      <span className="text-sm">Inside Dhaka (à§³{DELIVERY_CHARGE_INSIDE_DHAKA})</span>
+                      <span className="text-sm">
+                        {t('cart.insideDhaka')} (৳{DELIVERY_CHARGE_INSIDE_DHAKA})
+                      </span>
                     </label>
                     <label className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors">
                       <input
@@ -284,39 +288,41 @@ export default function CartClient() {
                           setLocation(e.target.value as 'dhaka' | 'outside')
                         }
                       />
-                      <span className="text-sm">Outside Dhaka (à§³{DELIVERY_CHARGE_OUTSIDE_DHAKA})</span>
+                      <span className="text-sm">
+                        {t('cart.outsideDhaka')} (৳{DELIVERY_CHARGE_OUTSIDE_DHAKA})
+                      </span>
                     </label>
                   </div>
                 </div>
 
                 <div className="space-y-3 pt-4 border-t border-border">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-medium">à§³{subtotal}</span>
+                    <span className="text-muted-foreground">{t('common.subtotal')}</span>
+                    <span className="font-medium">৳{subtotal}</span>
                   </div>
                   {discountPercent > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-green-600">
-                        Discount ({discountPercent}%)
+                        {t('common.discount')} ({discountPercent}%)
                       </span>
                       <span className="text-green-600 font-medium">
-                        -à§³{discountAmount}
+                        -৳{discountAmount}
                       </span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Delivery</span>
-                    <span className="font-medium">à§³{deliveryCharge}</span>
+                    <span className="text-muted-foreground">{t('checkout.deliveryCharge')}</span>
+                    <span className="font-medium">৳{deliveryCharge}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold pt-3 border-t border-border">
-                    <span>Total</span>
-                    <span className="text-primary">à§³{total}</span>
+                    <span>{t('common.total')}</span>
+                    <span className="text-primary">৳{total}</span>
                   </div>
                 </div>
 
                 <Link href="/checkout" className="block">
                   <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12">
-                    Proceed to Checkout
+                    {t('cart.checkout')}
                   </Button>
                 </Link>
 
@@ -325,7 +331,7 @@ export default function CartClient() {
                     variant="outline"
                     className="w-full border-border"
                   >
-                    Continue Shopping
+                    {t('common.continueShopping')}
                   </Button>
                 </Link>
               </CardContent>

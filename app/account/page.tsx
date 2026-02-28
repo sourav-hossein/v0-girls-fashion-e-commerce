@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -8,8 +8,10 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { useT } from '@/hooks/use-t'
 
 export default function AccountDashboard() {
+  const { t } = useT()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -77,14 +79,14 @@ export default function AccountDashboard() {
           addresses: addressRes.count || 0,
         })
       } catch (error: any) {
-        toast.error(error.message || 'Failed to load account')
+        toast.error(error.message || t('account.loadFailed'))
       } finally {
         setLoading(false)
       }
     }
 
     loadAccount()
-  }, [])
+  }, [t])
 
   const handleSave = async () => {
     if (!userData.id) return
@@ -100,10 +102,10 @@ export default function AccountDashboard() {
         .eq('id', userData.id)
 
       if (error) throw error
-      toast.success('Profile updated')
+      toast.success(t('account.profileUpdated'))
       setIsEditing(false)
     } catch (error: any) {
-      toast.error(error.message || 'Failed to update profile')
+      toast.error(error.message || t('account.profileUpdateFailed'))
     } finally {
       setIsSaving(false)
     }
@@ -113,8 +115,8 @@ export default function AccountDashboard() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-foreground mb-2">My Profile</h1>
-          <p className="text-muted-foreground">Loading account...</p>
+          <h1 className="text-3xl font-serif font-bold text-foreground mb-2">{t('account.profileTitle')}</h1>
+          <p className="text-muted-foreground">{t('account.loadingAccount')}</p>
         </div>
       </div>
     )
@@ -122,20 +124,18 @@ export default function AccountDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Profile Header */}
       <div>
         <h1 className="text-3xl font-serif font-bold text-foreground mb-2">
-          My Profile
+          {t('account.profileTitle')}
         </h1>
         <p className="text-muted-foreground">
-          Manage your account information
+          {t('account.profileSubtitle')}
         </p>
       </div>
 
-      {/* Personal Information */}
       <Card className="border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border">
-          <CardTitle>Personal Information</CardTitle>
+          <CardTitle>{t('account.personalInfo')}</CardTitle>
           <Button
             variant="outline"
             onClick={() => {
@@ -147,16 +147,15 @@ export default function AccountDashboard() {
             }}
             disabled={isSaving}
           >
-            {isSaving ? 'Saving...' : isEditing ? 'Save' : 'Edit'}
+            {isSaving ? t('account.saving') : isEditing ? t('common.save') : t('common.edit')}
           </Button>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {/* Full Name */}
             <div>
               <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
                 <User className="w-4 h-4" />
-                Full Name
+                {t('forms.fullName')}
               </label>
               <Input
                 value={userData.full_name}
@@ -168,11 +167,10 @@ export default function AccountDashboard() {
               />
             </div>
 
-            {/* Email */}
             <div>
               <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                Email
+                {t('auth.email')}
               </label>
               <Input
                 type="email"
@@ -182,11 +180,10 @@ export default function AccountDashboard() {
               />
             </div>
 
-            {/* Phone */}
             <div>
               <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                Phone Number
+                {t('forms.phoneNumber')}
               </label>
               <Input
                 value={userData.phoneNumber}
@@ -201,16 +198,15 @@ export default function AccountDashboard() {
         </CardContent>
       </Card>
 
-      {/* Addresses */}
       <Card className="border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border">
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4 text-primary" />
-            <CardTitle>Delivery Addresses</CardTitle>
+            <CardTitle>{t('addresses.title')}</CardTitle>
           </div>
           <Button asChild variant="outline" className="gap-2">
             <Link href="/account/addresses">
-              Manage
+              {t('account.manage')}
               <ExternalLink className="w-4 h-4" />
             </Link>
           </Button>
@@ -219,35 +215,34 @@ export default function AccountDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">
-                Manage your saved delivery addresses for faster checkout.
+                {t('addresses.pageDescription')}
               </p>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-primary">{stats.addresses}</div>
-              <p className="text-xs text-muted-foreground">Saved</p>
+              <p className="text-xs text-muted-foreground">{t('account.saved')}</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="border-border">
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-primary mb-1">{stats.orders}</div>
-            <p className="text-muted-foreground text-sm">Total Orders</p>
+            <p className="text-muted-foreground text-sm">{t('account.totalOrders')}</p>
           </CardContent>
         </Card>
         <Card className="border-border">
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-accent mb-1">{stats.wishlist}</div>
-            <p className="text-muted-foreground text-sm">Wishlist Items</p>
+            <p className="text-muted-foreground text-sm">{t('account.wishlistItems')}</p>
           </CardContent>
         </Card>
         <Card className="border-border">
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-secondary mb-1">{stats.addresses}</div>
-            <p className="text-muted-foreground text-sm">Saved Addresses</p>
+            <p className="text-muted-foreground text-sm">{t('account.savedAddresses')}</p>
           </CardContent>
         </Card>
       </div>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,7 @@ import {
   getDistrictName,
   getThanaName,
 } from '@/lib/geo-data'
+import { useT } from '@/hooks/use-t'
 
 interface UserAddress {
   id: string
@@ -31,6 +32,7 @@ interface UserAddress {
 }
 
 export function UserAddressesList() {
+  const { t } = useT()
   const [addresses, setAddresses] = useState<UserAddress[]>([])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
@@ -56,13 +58,13 @@ export function UserAddressesList() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data?.message || 'Failed to load addresses')
+        throw new Error(data?.message || t('addresses.loadFailed'))
       }
 
       setAddresses(data || [])
     } catch (error) {
       console.error('Error fetching addresses:', error)
-      toast.error('Failed to load addresses')
+      toast.error(t('addresses.loadFailed'))
     }
   }
 
@@ -80,9 +82,9 @@ export function UserAddressesList() {
         })
         const data = await response.json()
         if (!response.ok) {
-          throw new Error(data?.message || 'Failed to update address')
+          throw new Error(data?.message || t('addresses.updateFailed'))
         }
-        toast.success('Address updated successfully')
+        toast.success(t('addresses.updated'))
       } else {
         const response = await fetch('/api/addresses', {
           method: 'POST',
@@ -92,9 +94,9 @@ export function UserAddressesList() {
         })
         const data = await response.json()
         if (!response.ok) {
-          throw new Error(data?.message || 'Failed to add address')
+          throw new Error(data?.message || t('addresses.addFailed'))
         }
-        toast.success('Address added successfully')
+        toast.success(t('addresses.added'))
       }
 
       setOpen(false)
@@ -112,14 +114,14 @@ export function UserAddressesList() {
       fetchAddresses()
     } catch (error) {
       console.error('Error saving address:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to save address')
+      toast.error(error instanceof Error ? error.message : t('addresses.saveFailed'))
     } finally {
       setLoading(false)
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this address?')) return
+    if (!confirm(t('addresses.confirmDelete'))) return
 
     try {
       const response = await fetch(`/api/addresses?id=${id}`, {
@@ -128,13 +130,13 @@ export function UserAddressesList() {
       })
       const data = await response.json()
       if (!response.ok) {
-        throw new Error(data?.message || 'Failed to delete address')
+        throw new Error(data?.message || t('addresses.deleteFailed'))
       }
-      toast.success('Address deleted')
+      toast.success(t('addresses.deleted'))
       fetchAddresses()
     } catch (error) {
       console.error('Error deleting address:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to delete address')
+      toast.error(error instanceof Error ? error.message : t('addresses.deleteFailed'))
     }
   }
 
@@ -148,13 +150,13 @@ export function UserAddressesList() {
       })
       const data = await response.json()
       if (!response.ok) {
-        throw new Error(data?.message || 'Failed to update default address')
+        throw new Error(data?.message || t('addresses.defaultFailed'))
       }
-      toast.success('Default address updated')
+      toast.success(t('addresses.defaultUpdated'))
       fetchAddresses()
     } catch (error) {
       console.error('Error updating default address:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to update default address')
+      toast.error(error instanceof Error ? error.message : t('addresses.defaultFailed'))
     }
   }
 
@@ -173,10 +175,9 @@ export function UserAddressesList() {
   }
 
   return (
-    <div>
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-serif font-bold">Delivery Addresses</h2>
+        <h2 className="text-2xl font-serif font-bold">{t('addresses.title')}</h2>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
@@ -195,21 +196,21 @@ export function UserAddressesList() {
               className="bg-gradient-to-r from-primary to-accent"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Add Address
+              {t('addresses.addAddress')}
             </Button>
           </DialogTrigger>
 
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Edit Address' : 'Add New Address'}</DialogTitle>
+              <DialogTitle>{editingId ? t('addresses.editAddress') : t('addresses.addNewAddress')}</DialogTitle>
               <DialogDescription>
-                {editingId ? 'Update your delivery address details' : 'Add a new delivery address for faster checkout'}
+                {editingId ? t('addresses.editDescription') : t('addresses.addDescription')}
               </DialogDescription>
             </DialogHeader>
 
             <form onSubmit={handleSave} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="full_name">Full Name *</Label>
+                <Label htmlFor="full_name">{t('forms.fullName')} *</Label>
                 <Input
                   id="full_name"
                   value={formData.full_name}
@@ -219,7 +220,7 @@ export function UserAddressesList() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone_number">Phone Number *</Label>
+                <Label htmlFor="phone_number">{t('forms.phoneNumber')} *</Label>
                 <Input
                   id="phone_number"
                   value={formData.phone_number}
@@ -229,98 +230,95 @@ export function UserAddressesList() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="division">Division *</Label>
-                <Select
-                  value={formData.division_id}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, division_id: value, district_id: '', thana_id: '' })
-                  }
-                >
-                  <SelectTrigger id="division">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {divisions.map((div) => (
-                      <SelectItem key={div.id} value={div.id}>
-                        {div.name_en}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Label htmlFor="division">{t('forms.division')} *</Label>
+                  <Select
+                    value={formData.division_id}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, division_id: value, district_id: '', thana_id: '' })
+                    }
+                  >
+                    <SelectTrigger id="division">
+                      <SelectValue placeholder={t('common.select')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {divisions.map((div) => (
+                        <SelectItem key={div.id} value={div.id}>
+                          {div.name_en}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="district">{t('forms.district')} *</Label>
+                  <Select
+                    value={formData.district_id}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, district_id: value, thana_id: '' })
+                    }
+                  >
+                    <SelectTrigger id="district">
+                      <SelectValue placeholder={t('common.select')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {formData.division_id &&
+                        districtsByDivisionId[formData.division_id]?.map((dist) => (
+                          <SelectItem key={dist.id} value={dist.id}>
+                            {dist.name_en}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="district">District *</Label>
+                <Label htmlFor="thana">{t('forms.thana')} *</Label>
                 <Select
-                  value={formData.district_id}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, district_id: value, thana_id: '' })
-                  }
+                  value={formData.thana_id}
+                  onValueChange={(value) => setFormData({ ...formData, thana_id: value })}
                 >
-                  <SelectTrigger id="district">
-                    <SelectValue placeholder="Select" />
+                  <SelectTrigger id="thana">
+                    <SelectValue placeholder={t('common.select')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {formData.division_id &&
-                      districtsByDivisionId[formData.division_id]?.map((dist) => (
-                        <SelectItem key={dist.id} value={dist.id}>
-                          {dist.name_en}
+                    {formData.district_id &&
+                      thanasByDistrictId[formData.district_id]?.map((thana) => (
+                        <SelectItem key={thana.id} value={thana.id}>
+                          {thana.name_en}
                         </SelectItem>
                       ))}
                   </SelectContent>
                 </Select>
               </div>
-              </div>
 
               <div className="space-y-2">
-                <Label htmlFor="thana">Thana/Upazila *</Label>
-              <Select
-                value={formData.thana_id}
-                onValueChange={(value) => setFormData({ ...formData, thana_id: value })}
-              >
-                <SelectTrigger id="thana">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  {formData.district_id &&
-                    thanasByDistrictId[formData.district_id]?.map((thana) => (
-                      <SelectItem key={thana.id} value={thana.id}>
-                        {thana.name_en}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-                </Select>
-              </div>
-              
-
-              <div className="space-y-2">
-                <Label htmlFor="area">Area/Locality</Label>
+                <Label htmlFor="area">{t('forms.area')}</Label>
                 <Input
                   id="area"
                   value={formData.area}
                   onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                  placeholder="e.g., Block C, House 10"
+                  placeholder={t('checkout.areaPlaceholder')}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="full_address">Full Address *</Label>
+                <Label htmlFor="full_address">{t('forms.fullAddress')} *</Label>
                 <textarea
                   id="full_address"
                   value={formData.full_address}
                   onChange={(e) => setFormData({ ...formData, full_address: e.target.value })}
                   className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   rows={3}
-                  placeholder="Complete address details"
+                  placeholder={t('checkout.addressPlaceholder')}
                   required
                 />
               </div>
 
-
-
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Saving...' : editingId ? 'Update Address' : 'Add Address'}
+                {loading ? t('addresses.saving') : editingId ? t('addresses.updateAddress') : t('addresses.addAddress')}
               </Button>
             </form>
           </DialogContent>
@@ -332,8 +330,8 @@ export function UserAddressesList() {
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <MapPin className="w-12 h-12 text-muted-foreground/30 mb-3" />
-              <p className="text-muted-foreground">No addresses saved yet</p>
-              <p className="text-sm text-muted-foreground">Add your first delivery address</p>
+              <p className="text-muted-foreground">{t('addresses.noAddressesTitle')}</p>
+              <p className="text-sm text-muted-foreground">{t('addresses.noAddressesBody')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -346,7 +344,7 @@ export function UserAddressesList() {
                     {address.is_default && (
                       <span className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
                         <Check className="w-3 h-3" />
-                        Default Address
+                        {t('addresses.defaultAddress')}
                       </span>
                     )}
                   </div>
@@ -388,7 +386,7 @@ export function UserAddressesList() {
                     onClick={() => handleSetDefault(address.id)}
                   >
                     <Check className="w-4 h-4 mr-2" />
-                    Set as Default
+                    {t('addresses.setDefault')}
                   </Button>
                 )}
               </CardContent>
@@ -396,7 +394,6 @@ export function UserAddressesList() {
           ))
         )}
       </div>
-    </div>
     </div>
   )
 }

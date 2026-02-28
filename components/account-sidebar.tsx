@@ -11,38 +11,40 @@ import {
   Settings,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-
-const menuItems = [
-  {
-    label: 'Dashboard',
-    href: '/account',
-    icon: User,
-  },
-  {
-    label: 'Orders',
-    href: '/account/orders',
-    icon: ShoppingBag,
-  },
-  {
-    label: 'Wishlist',
-    href: '/account/wishlist',
-    icon: Heart,
-  },
-  {
-    label: 'Addresses',
-    href: '/account/addresses',
-    icon: MapPin,
-  },
-  {
-    label: 'Settings',
-    href: '/account/settings',
-    icon: Settings,
-  },
-]
+import { useT } from '@/hooks/use-t'
 
 export default function AccountSidebar() {
+  const { t } = useT()
   const pathname = usePathname()
   const router = useRouter()
+
+  const menuItems = [
+    {
+      label: t('account.dashboard'),
+      href: '/account',
+      icon: User,
+    },
+    {
+      label: t('account.orders'),
+      href: '/account/orders',
+      icon: ShoppingBag,
+    },
+    {
+      label: t('account.wishlist'),
+      href: '/account/wishlist',
+      icon: Heart,
+    },
+    {
+      label: t('account.addresses'),
+      href: '/account/addresses',
+      icon: MapPin,
+    },
+    {
+      label: t('account.settings'),
+      href: '/account/settings',
+      icon: Settings,
+    },
+  ]
 
   return (
     <div className="md:col-span-1">
@@ -78,7 +80,7 @@ export default function AccountSidebar() {
           }}
         >
           <LogOut className="w-5 h-5" />
-          <span>Logout</span>
+          <span>{t('nav.logout')}</span>
         </Button>
       </nav>
     </div>

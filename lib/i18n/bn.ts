@@ -1,4 +1,4 @@
-{
+const bn = {
   "nav": {
     "home": "হোম",
     "shop": "শপ",
@@ -279,3 +279,6 @@
     "deliveryNote": "বাংলাদেশজুড়ে দ্রুত হোম ডেলিভারি"
   }
 }
+
+
+export default bn

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { addToCart, CartAuthError } from '@/lib/cart-api'
+import { useT } from '@/hooks/use-t'
 
 interface WishlistItem {
   id: string
@@ -23,6 +24,7 @@ interface WishlistItem {
 }
 
 export default function WishlistClient() {
+  const { t } = useT()
   const router = useRouter()
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -60,7 +62,7 @@ export default function WishlistClient() {
         throw new Error(data.error || 'Failed to remove from wishlist')
       }
       setWishlistItems((items) => items.filter((item) => item.product_id !== productId))
-      toast.success('Removed from wishlist')
+      toast.success(t('wishlist.removed'))
     } catch (error: any) {
       toast.error(error.message || 'Failed to remove from wishlist')
     }
@@ -69,7 +71,7 @@ export default function WishlistClient() {
   const handleAddToCart = async (productId: string, productName: string) => {
     try {
       await addToCart({ productId, quantity: 1 })
-      toast.success(`Added ${productName} to cart!`)
+      toast.success(`${t('common.addToCart')}: ${productName}`)
     } catch (error) {
       if (error instanceof CartAuthError) {
         toast.error(error.message)
@@ -84,7 +86,7 @@ export default function WishlistClient() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="h-96 flex items-center justify-center">
-          <p className="text-muted-foreground">Loading wishlist...</p>
+          <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
     )
@@ -93,7 +95,7 @@ export default function WishlistClient() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-4xl font-serif font-bold text-foreground mb-8">
-        My Wishlist
+        {t('wishlist.title')}
       </h1>
 
       {wishlistItems.length === 0 ? (
@@ -101,15 +103,15 @@ export default function WishlistClient() {
           <CardContent className="p-12 text-center">
             <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-2xl font-serif font-bold text-foreground mb-2">
-              Your wishlist is empty
+              {t('wishlist.empty')}
             </h2>
             <p className="text-muted-foreground mb-6">
-              Add items to your wishlist to keep track of your favorites
+              {t('wishlist.emptyHint')}
             </p>
             <Link href="/shop">
               <Button className="bg-primary hover:bg-primary/90 gap-2">
                 <ArrowRight className="w-4 h-4" />
-                Start Shopping
+                {t('wishlist.startShopping')}
               </Button>
             </Link>
           </CardContent>
@@ -126,12 +128,10 @@ export default function WishlistClient() {
               <Card key={item.id} className="border-border overflow-hidden hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-                    {/* Product Image */}
                     <div className="w-24 h-24 bg-muted rounded-lg flex-shrink-0 flex items-center justify-center">
-                      <span className="text-3xl">ðŸ›ï¸</span>
+                      <span className="text-3xl">*</span>
                     </div>
 
-                    {/* Product Details */}
                     <div className="flex-1 min-w-0">
                       <Link href={`/product/${item.product.slug}`}>
                         <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors truncate">
@@ -139,42 +139,39 @@ export default function WishlistClient() {
                         </h3>
                       </Link>
 
-                      {/* Pricing */}
                       <div className="flex items-baseline gap-2 mt-2">
                         <span className="text-xl font-bold text-primary">
-                          à§³{item.product.discount_price || item.product.price}
+                          ৳{item.product.discount_price || item.product.price}
                         </span>
                         {item.product.discount_price && (
                           <>
                             <span className="text-sm text-muted-foreground line-through">
-                              à§³{item.product.price}
+                              ৳{item.product.price}
                             </span>
                             <span className="text-sm font-bold text-accent">
-                              Save {discount}%
+                              {t('wishlist.savePercent')} {discount}%
                             </span>
                           </>
                         )}
                       </div>
 
-                      {/* Added Date */}
                       <p className="text-xs text-muted-foreground mt-2">
-                        Added {new Date(item.added_at).toLocaleDateString()}
+                        {t('wishlist.addedOn')} {new Date(item.added_at).toLocaleDateString()}
                       </p>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex gap-3 w-full sm:w-auto">
                       <Button
                         onClick={() => handleAddToCart(item.product.id, item.product.name)}
                         className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
                       >
                         <ShoppingCart className="w-4 h-4" />
-                        <span className="hidden sm:inline">Add to Cart</span>
+                        <span className="hidden sm:inline">{t('common.addToCart')}</span>
                       </Button>
                       <button
                         onClick={() => handleRemoveFromWishlist(item.product_id)}
                         className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
-                        aria-label="Remove from wishlist"
+                        aria-label={t('common.removeFromWishlist')}
                       >
                         <Heart className="w-5 h-5 fill-destructive" />
                       </button>
@@ -185,11 +182,12 @@ export default function WishlistClient() {
             )
           })}
 
-          {/* Summary */}
           <div className="mt-8 p-6 bg-primary/5 border border-primary/20 rounded-lg">
             <p className="text-center text-foreground">
-              You have <span className="font-bold">{wishlistItems.length}</span> item
-              {wishlistItems.length !== 1 ? 's' : ''} in your wishlist
+              {t('wishlist.summary')}{' '}
+              <span className="font-bold">{wishlistItems.length}</span>{' '}
+              {wishlistItems.length !== 1 ? t('wishlist.items') : t('wishlist.item')}{' '}
+              {t('wishlist.inWishlist')}
             </p>
           </div>
         </div>

@@ -7,6 +7,7 @@ import { LanguageProvider } from '@/components/language-provider'
 import { Toaster } from 'sonner'
 import AnalyticsSession from '@/components/analytics-session'
 import { createAdminSupabaseClient } from '@/lib/supabase-admin'
+import { cookies } from 'next/headers'
 import './globals.css'
 
 const geist = Geist({ subsets: ["latin"] });
@@ -57,6 +58,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const cookieStore = await cookies()
+  const langValue = cookieStore.get('language')?.value
+  const lang = langValue === 'bn' ? 'bn' : 'en'
   const supabase = await createAdminSupabaseClient()
   const { data } = await supabase
     .from('store_settings')
@@ -67,7 +71,7 @@ export default async function RootLayout({
   const theme = data?.theme ?? 'rose'
 
   return (
-    <html lang="en" suppressHydrationWarning data-theme={theme}>
+    <html lang={lang} suppressHydrationWarning data-theme={theme}>
       <body className={`${geist.className} ${geistMono.variable} ${cormorant.variable} font-sans antialiased`}>
         <Script id="brand-theme" strategy="beforeInteractive">
           {`document.documentElement.setAttribute('data-theme', '${theme}')`}

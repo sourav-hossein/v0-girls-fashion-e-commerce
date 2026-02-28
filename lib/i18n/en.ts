@@ -1,4 +1,4 @@
-{
+const en = {
   "nav": {
     "home": "Home",
     "shop": "Shop",
@@ -278,3 +278,6 @@
     "deliveryNote": "Enjoy fast home delivery across Bangladesh"
   }
 }
+
+
+export default en

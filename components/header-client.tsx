@@ -21,33 +21,35 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Category } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
-
-const fallbackNavItems = [
-  { href: '/shop', label: 'Shop' },
-  { href: '/shop?category=earrings', label: 'Earrings' },
-  { href: '/shop?category=hijabs', label: 'Hijabs' },
-  { href: '/shop?category=bags', label: 'Bags' },
-  { href: '/shop?category=hair-clips', label: 'Hair Clips' },
-  { href: '/shop?category=rings', label: 'Rings' },
-  { href: '/shop?category=bracelets', label: 'Bracelets' },
-  { href: '/shop?category=combos', label: 'Combos' },
-]
+import { useT } from '@/hooks/use-t'
 
 interface HeaderClientProps {
   categories: Category[]
 }
 
 export default function HeaderClient({ categories }: HeaderClientProps) {
+  const { t } = useT()
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [user, setUser] = useState<Awaited<ReturnType<typeof supabase.auth.getUser>>['data']['user']>(null)
   const [isAuthLoading, setIsAuthLoading] = useState(true)
   const router = useRouter()
 
+  const fallbackNavItems = [
+    { href: '/shop', label: t('nav.shop') },
+    { href: '/shop?category=earrings', label: t('common.earrings') },
+    { href: '/shop?category=hijabs', label: t('common.hijabs') },
+    { href: '/shop?category=bags', label: t('common.handbags') },
+    { href: '/shop?category=hair-clips', label: t('common.hairAccessories') },
+    { href: '/shop?category=rings', label: t('common.rings') },
+    { href: '/shop?category=bracelets', label: t('common.bracelets') },
+    { href: '/shop?category=combos', label: t('common.comboOffers') },
+  ]
+
   const categoryItems =
     categories.length > 0
       ? [
-          { href: '/shop', label: 'Shop' },
+          { href: '/shop', label: t('nav.shop') },
           ...categories.slice(0, 8).map((category) => ({
             href: `/shop?category=${category.slug}`,
             label: category.name,
@@ -96,20 +98,17 @@ export default function HeaderClient({ categories }: HeaderClientProps) {
   return (
     <header className="sticky top-0 z-50 bg-card border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top Bar */}
         <div className="flex items-center justify-between h-20">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-primary-foreground font-serif font-bold text-lg">L</span>
             </div>
             <div className="hidden sm:block">
-              <h1 className="font-serif font-bold text-lg text-foreground">Lubaba Fashion</h1>
-              <p className="text-xs text-muted-foreground">Premium Fashion Accessories</p>
+              <h1 className="font-serif font-bold text-lg text-foreground">{t('home.brandTitle')}</h1>
+              <p className="text-xs text-muted-foreground">{t('home.brandTagline')}</p>
             </div>
           </Link>
 
-          {/* Search Bar - Desktop */}
           <div className="hidden md:flex flex-1 max-w-md mx-8">
             <form
               className="relative w-full"
@@ -122,7 +121,7 @@ export default function HeaderClient({ categories }: HeaderClientProps) {
             >
               <Input
                 type="search"
-                placeholder="Search accessories..."
+                placeholder={t('common.searchPlaceholder')}
                 className="w-full bg-background pr-10"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -130,14 +129,13 @@ export default function HeaderClient({ categories }: HeaderClientProps) {
               <button
                 type="submit"
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label="Search"
+                aria-label={t('common.search')}
               >
                 <Search className="w-4 h-4" />
               </button>
             </form>
           </div>
 
-          {/* Right Icons */}
           <div className="flex items-center gap-2 sm:gap-4">
             <Link href="/wishlist" className="p-2 hover:bg-muted rounded-lg transition-colors">
               <Heart className="w-5 h-5 text-foreground" />
@@ -148,7 +146,7 @@ export default function HeaderClient({ categories }: HeaderClientProps) {
             <ThemeLanguageToggle />
             {!isAuthLoading && !user && (
               <Button asChild className="hidden sm:inline-flex">
-                <Link href="/auth/login">Login</Link>
+                <Link href="/auth/login">{t('nav.login')}</Link>
               </Button>
             )}
             {!isAuthLoading && user && (
@@ -161,23 +159,22 @@ export default function HeaderClient({ categories }: HeaderClientProps) {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem asChild>
                     <Link href="/account" className="cursor-pointer">
-                      My Account
+                      {t('nav.myAccount')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/account/orders" className="cursor-pointer">
-                      Order History
+                      {t('nav.orderHistory')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive">
-                    Logout
+                    {t('nav.logout')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
 
-            {/* Mobile Menu */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden">
@@ -202,7 +199,7 @@ export default function HeaderClient({ categories }: HeaderClientProps) {
                       className="text-foreground hover:text-primary transition-colors"
                       onClick={() => setIsOpen(false)}
                     >
-                      Login
+                      {t('nav.login')}
                     </Link>
                   )}
                   {!isAuthLoading && user && (
@@ -212,14 +209,14 @@ export default function HeaderClient({ categories }: HeaderClientProps) {
                         className="text-foreground hover:text-primary transition-colors"
                         onClick={() => setIsOpen(false)}
                       >
-                        My Account
+                        {t('nav.myAccount')}
                       </Link>
                       <Link
                         href="/account/orders"
                         className="text-foreground hover:text-primary transition-colors"
                         onClick={() => setIsOpen(false)}
                       >
-                        Order History
+                        {t('nav.orderHistory')}
                       </Link>
                       <button
                         type="button"
@@ -229,7 +226,7 @@ export default function HeaderClient({ categories }: HeaderClientProps) {
                           setIsOpen(false)
                         }}
                       >
-                        Logout
+                        {t('nav.logout')}
                       </button>
                     </>
                   )}
@@ -239,7 +236,6 @@ export default function HeaderClient({ categories }: HeaderClientProps) {
           </div>
         </div>
 
-        {/* Navigation - Desktop */}
         <nav className="hidden md:flex items-center gap-8 pb-4 border-t border-border/50">
           {categoryItems.map((item) => (
             <Link

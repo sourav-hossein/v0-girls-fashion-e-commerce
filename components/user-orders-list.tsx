@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { Order } from '@/lib/types'
@@ -6,12 +6,15 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Package } from 'lucide-react'
+import { useT } from '@/hooks/use-t'
 
 interface UserOrdersListProps {
   orders: Order[]
 }
 
 export default function UserOrdersList({ orders }: UserOrdersListProps) {
+  const { t } = useT()
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
@@ -33,15 +36,15 @@ export default function UserOrdersList({ orders }: UserOrdersListProps) {
         <CardContent className="p-12 text-center">
           <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-serif font-bold text-foreground mb-2">
-            No orders yet
+            {t('orders.noOrdersTitle')}
           </h2>
           <p className="text-muted-foreground mb-6">
-            Start shopping to place your first order
+            {t('orders.noOrdersBody')}
           </p>
           <Link href="/shop">
             <Button className="bg-primary hover:bg-primary/90 gap-2">
               <ArrowRight className="w-4 h-4" />
-              Continue Shopping
+              {t('common.continueShopping')}
             </Button>
           </Link>
         </CardContent>
@@ -55,12 +58,11 @@ export default function UserOrdersList({ orders }: UserOrdersListProps) {
         <Card key={order.id} className="border-border hover:shadow-lg transition-shadow overflow-hidden">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              {/* Order Info */}
               <div className="flex-1">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                   <div>
                     <h3 className="font-semibold text-lg text-foreground">
-                      Order {order.order_number}
+                      {t('orders.orderNumber')} {order.order_number}
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       {new Date(order.created_at).toLocaleDateString('en-US', {
@@ -71,15 +73,14 @@ export default function UserOrdersList({ orders }: UserOrdersListProps) {
                     </p>
                   </div>
                   <Badge className={getStatusColor(order.status)}>
-                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    {t(`status.${order.status}`)}
                   </Badge>
                 </div>
 
-                {/* Order Details */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">
-                      Amount
+                      {t('orders.amount')}
                     </p>
                     <p className="text-lg font-bold text-primary">
                       ৳{order.total_amount}
@@ -87,7 +88,7 @@ export default function UserOrdersList({ orders }: UserOrdersListProps) {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">
-                      Payment
+                      {t('orders.payment')}
                     </p>
                     <p className="text-sm font-medium text-foreground capitalize">
                       {order.payment_method}
@@ -95,35 +96,33 @@ export default function UserOrdersList({ orders }: UserOrdersListProps) {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">
-                      Items
+                      {t('orders.items')}
                     </p>
                     <p className="text-sm font-medium text-foreground">
-                      {Math.floor(Math.random() * 5) + 1} items
+                      {Math.floor(Math.random() * 5) + 1} {t('orders.items')}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex flex-col gap-2 sm:items-end">
                 <Link href={`/account/orders/${order.id}`}>
                   <Button className="bg-primary hover:bg-primary/90 w-full sm:w-auto">
-                    View Details
+                    {t('orders.viewDetails')}
                   </Button>
                 </Link>
                 {order.status === 'shipped' && (
                   <Button variant="outline" className="border-border w-full sm:w-auto">
-                    Track Order
+                    {t('orders.trackOrder')}
                   </Button>
                 )}
               </div>
             </div>
 
-            {/* Progress Bar */}
             <div className="mt-6 pt-6 border-t border-border">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-muted-foreground uppercase">
-                  Delivery Progress
+                  {t('orders.deliveryProgress')}
                 </span>
                 <span className="text-xs font-medium text-foreground">
                   {order.status === 'pending'
@@ -151,10 +150,10 @@ export default function UserOrdersList({ orders }: UserOrdersListProps) {
                 ></div>
               </div>
               <div className="flex justify-between text-xs text-muted-foreground mt-3">
-                <span>Pending</span>
-                <span>Confirmed</span>
-                <span>Shipped</span>
-                <span>Delivered</span>
+                <span>{t('status.pending')}</span>
+                <span>{t('status.confirmed')}</span>
+                <span>{t('status.shipped')}</span>
+                <span>{t('status.delivered')}</span>
               </div>
             </div>
           </CardContent>

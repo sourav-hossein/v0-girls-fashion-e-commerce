@@ -13,10 +13,12 @@ import {
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
 import { useEffect, useState } from 'react'
+import { useT } from '@/hooks/use-t'
 
 export function ThemeLanguageToggle() {
   const { resolvedTheme, setTheme } = useTheme()
   const { language, setLanguage } = useLanguage()
+  const { t } = useT()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -44,25 +46,25 @@ export function ThemeLanguageToggle() {
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon">
             <Globe className="w-4 h-4" />
-            <span className="sr-only">Language Settings</span>
+            <span className="sr-only">{t('nav.language')}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuLabel className="text-xs uppercase font-semibold text-muted-foreground">
-            Language
+            {t('nav.language')}
           </DropdownMenuLabel>
           <DropdownMenuCheckboxItem
             checked={language === 'en'}
             onCheckedChange={() => setLanguage('en')}
             className="flex items-center gap-2"
           >
-            English
+            {t('nav.english')}
           </DropdownMenuCheckboxItem>
           <DropdownMenuCheckboxItem
             checked={language === 'bn'}
             onCheckedChange={() => setLanguage('bn')}
           >
-            à¦¬à¦¾à¦‚à¦²à¦¾ (Bengali)
+            {t('nav.bengali')}
           </DropdownMenuCheckboxItem>
         </DropdownMenuContent>
       </DropdownMenu>
