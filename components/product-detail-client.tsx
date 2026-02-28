@@ -306,6 +306,7 @@ export default function ProductDetailClient({
               onClick={handleAddToWishlist}
               variant="outline"
               disabled={isWishlistLoading}
+              aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
               className="px-6 h-12 border-border"
             >
               <Heart
