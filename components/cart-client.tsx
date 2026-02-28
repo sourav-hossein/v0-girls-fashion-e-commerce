@@ -38,11 +38,14 @@ export default function CartClient() {
   const { t } = useT()
   const router = useRouter()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([])
+  const [selectionInitialized, setSelectionInitialized] = useState(false)
   const [couponCode, setCouponCode] = useState('')
   const [discountPercent, setDiscountPercent] = useState(0)
   const [location, setLocation] = useState<'dhaka' | 'outside'>('dhaka')
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthRequired, setIsAuthRequired] = useState(false)
+  const [checkoutScope, setCheckoutScope] = useState<'all' | 'selected'>('all')
 
   useEffect(() => {
     const loadCart = async () => {
@@ -63,17 +66,41 @@ export default function CartClient() {
     loadCart()
   }, [])
 
+  useEffect(() => {
+    if (cartItems.length === 0) {
+      setSelectedItemIds([])
+      setSelectionInitialized(false)
+      return
+    }
+
+    if (!selectionInitialized) {
+      setSelectedItemIds(cartItems.map((item) => item.id))
+      setSelectionInitialized(true)
+      return
+    }
+
+    setSelectedItemIds((prev) =>
+      prev.filter((id) => cartItems.some((item) => item.id === id)),
+    )
+  }, [cartItems, selectionInitialized])
+
   const deliveryCharge =
     location === 'dhaka'
       ? DELIVERY_CHARGE_INSIDE_DHAKA
       : DELIVERY_CHARGE_OUTSIDE_DHAKA
 
-  const subtotal = cartItems.reduce((sum, item) => {
+  const checkoutItems =
+    checkoutScope === 'selected'
+      ? cartItems.filter((item) => selectedItemIds.includes(item.id))
+      : cartItems
+
+  const subtotal = checkoutItems.reduce((sum, item) => {
     const price = item.product?.discount_price ?? item.product?.price ?? 0
     return sum + price * item.quantity
   }, 0)
   const discountAmount = Math.round((subtotal * discountPercent) / 100)
-  const total = subtotal - discountAmount + deliveryCharge
+  const effectiveDeliveryCharge = checkoutItems.length === 0 ? 0 : deliveryCharge
+  const total = subtotal - discountAmount + effectiveDeliveryCharge
 
   const handleQuantityChange = async (id: string, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -99,6 +126,7 @@ export default function CartClient() {
     try {
       await removeCartItem(id)
       setCartItems(cartItems.filter((item) => item.id !== id))
+      setSelectedItemIds((items) => items.filter((itemId) => itemId !== id))
       toast.success(t('cart.itemRemoved'))
     } catch (error) {
       if (error instanceof CartAuthError) {
@@ -119,6 +147,38 @@ export default function CartClient() {
     setDiscountPercent(10)
     toast.success(t('cart.couponApplied'))
     setCouponCode('')
+  }
+
+  const allSelected = selectedItemIds.length === cartItems.length && cartItems.length > 0
+  const someSelected = selectedItemIds.length > 0 && !allSelected
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedItemIds([])
+      return
+    }
+    setSelectedItemIds(cartItems.map((item) => item.id))
+  }
+
+  const toggleItemSelection = (id: string) => {
+    setSelectedItemIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((itemId) => itemId !== id)
+        : [...prev, id],
+    )
+  }
+
+  const handleCheckout = () => {
+    if (checkoutScope === 'selected') {
+      if (selectedItemIds.length === 0) {
+        toast.error(t('cart.selectAtLeastOne'))
+        return
+      }
+      sessionStorage.setItem('checkout:selectedCartItemIds', JSON.stringify(selectedItemIds))
+    } else {
+      sessionStorage.removeItem('checkout:selectedCartItemIds')
+    }
+    router.push('/checkout')
   }
 
   if (isLoading) {
@@ -180,10 +240,34 @@ export default function CartClient() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={(input) => {
+                    if (input) input.indeterminate = someSelected
+                  }}
+                  onChange={toggleSelectAll}
+                />
+                {t('cart.selectAll')}
+              </label>
+              <p className="text-xs text-muted-foreground">
+                {t('cart.selectedCount')} {selectedItemIds.length}/{cartItems.length}
+              </p>
+            </div>
             {cartItems.map((item) => (
               <Card key={item.id} className="border-border overflow-hidden">
                 <CardContent className="p-6">
                   <div className="flex gap-6">
+                    <label className="flex items-start pt-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedItemIds.includes(item.id)}
+                        onChange={() => toggleItemSelection(item.id)}
+                        aria-label={t('cart.selectItem')}
+                      />
+                    </label>
                     <div className="w-24 h-24 bg-muted rounded-lg flex-shrink-0 flex items-center justify-center">
                       <span className="text-2xl">*</span>
                     </div>
@@ -312,7 +396,7 @@ export default function CartClient() {
                   )}
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{t('checkout.deliveryCharge')}</span>
-                    <span className="font-medium">৳{deliveryCharge}</span>
+                    <span className="font-medium">৳{effectiveDeliveryCharge}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold pt-3 border-t border-border">
                     <span>{t('common.total')}</span>
@@ -320,11 +404,42 @@ export default function CartClient() {
                   </div>
                 </div>
 
-                <Link href="/checkout" className="block">
-                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12">
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      {t('cart.checkoutMode')}
+                    </label>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors">
+                        <input
+                          type="radio"
+                          name="checkout-scope"
+                          value="all"
+                          checked={checkoutScope === 'all'}
+                          onChange={() => setCheckoutScope('all')}
+                        />
+                        <span className="text-sm">{t('cart.checkoutAll')}</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors">
+                        <input
+                          type="radio"
+                          name="checkout-scope"
+                          value="selected"
+                          checked={checkoutScope === 'selected'}
+                          onChange={() => setCheckoutScope('selected')}
+                        />
+                        <span className="text-sm">{t('cart.checkoutSelected')}</span>
+                      </label>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handleCheckout}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12"
+                    disabled={checkoutScope === 'selected' && checkoutItems.length === 0}
+                  >
                     {t('cart.checkout')}
                   </Button>
-                </Link>
+                </div>
 
                 <Link href="/shop">
                   <Button

@@ -51,6 +51,7 @@ export default function CheckoutClient({ settings }: { settings?: CheckoutSettin
   const [orderPlaced, setOrderPlaced] = useState(false)
   const [cartItems, setCartItems] = useState<any[]>([])
   const [cartLoading, setCartLoading] = useState(true)
+  const [selectedCartItemIds, setSelectedCartItemIds] = useState<string[] | null>(null)
   const [addressesLoading, setAddressesLoading] = useState(true)
   const [addresses, setAddresses] = useState<UserAddress[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
@@ -96,6 +97,21 @@ export default function CheckoutClient({ settings }: { settings?: CheckoutSettin
 
     loadCart()
   }, [t])
+
+  useEffect(() => {
+    const storedSelection = sessionStorage.getItem('checkout:selectedCartItemIds')
+    if (!storedSelection) return
+    try {
+      const parsed = JSON.parse(storedSelection)
+      if (Array.isArray(parsed)) {
+        setSelectedCartItemIds(parsed.map((id) => String(id)))
+      } else {
+        sessionStorage.removeItem('checkout:selectedCartItemIds')
+      }
+    } catch (error) {
+      sessionStorage.removeItem('checkout:selectedCartItemIds')
+    }
+  }, [])
 
   useEffect(() => {
     const loadAddresses = async () => {
@@ -146,7 +162,13 @@ export default function CheckoutClient({ settings }: { settings?: CheckoutSettin
     }))
   }, [selectedAddressId, addresses])
 
-  const subtotal = cartItems.reduce((sum, item) => {
+  const selectionActive = selectedCartItemIds !== null
+  const selectedIdSet = selectionActive ? new Set(selectedCartItemIds) : null
+  const checkoutItems = selectionActive
+    ? cartItems.filter((item) => selectedIdSet?.has(item.id))
+    : cartItems
+
+  const subtotal = checkoutItems.reduce((sum, item) => {
     const price = item.product?.discount_price ?? item.product?.price ?? 0
     return sum + price * (item.quantity || 1)
   }, 0)
@@ -202,8 +224,8 @@ export default function CheckoutClient({ settings }: { settings?: CheckoutSettin
       return false
     }
 
-    if (cartItems.length === 0) {
-      toast.error(t('checkout.emptyCart'))
+    if (checkoutItems.length === 0) {
+      toast.error(selectionActive ? t('checkout.selectedEmpty') : t('checkout.emptyCart'))
       return false
     }
 
@@ -306,6 +328,7 @@ export default function CheckoutClient({ settings }: { settings?: CheckoutSettin
         body: JSON.stringify({
           paymentMethod: 'cod',
           address: buildCheckoutAddress(),
+          selectedCartItemIds: selectedCartItemIds ?? undefined,
         }),
       })
 
@@ -315,6 +338,7 @@ export default function CheckoutClient({ settings }: { settings?: CheckoutSettin
       }
 
       setOrderPlaced(true)
+      sessionStorage.removeItem('checkout:selectedCartItemIds')
       toast.success(t('checkout.orderPlaced'))
       setTimeout(() => {
         router.push(`/order-success?orderId=${data.orderId}`)
@@ -341,6 +365,7 @@ export default function CheckoutClient({ settings }: { settings?: CheckoutSettin
         body: JSON.stringify({
           paymentMethod: 'sslcommerz',
           address: buildCheckoutAddress(),
+          selectedCartItemIds: selectedCartItemIds ?? undefined,
         }),
       })
 
@@ -350,6 +375,7 @@ export default function CheckoutClient({ settings }: { settings?: CheckoutSettin
       }
 
       toast.success(t('checkout.paymentRedirect'))
+      sessionStorage.removeItem('checkout:selectedCartItemIds')
       window.location.href = data.redirectUrl
     } catch (error) {
       toast.error(t('checkout.paymentFailed'))
@@ -599,7 +625,7 @@ export default function CheckoutClient({ settings }: { settings?: CheckoutSettin
                   </div>
                   <Button
                     onClick={handleCODSubmit}
-                    disabled={!codEnabled || isLoading || cartLoading || cartItems.length === 0}
+                    disabled={!codEnabled || isLoading || cartLoading || checkoutItems.length === 0}
                     className="w-full bg-primary hover:bg-primary/90 h-12 text-primary-foreground"
                   >
                     {isLoading ? t('checkout.processing') : t('checkout.placeOrder')}
@@ -625,7 +651,7 @@ export default function CheckoutClient({ settings }: { settings?: CheckoutSettin
                   </div>
                   <Button
                     onClick={handleSSLCommerzSubmit}
-                    disabled={!sslcommerzEnabled || isLoading || cartLoading || cartItems.length === 0}
+                    disabled={!sslcommerzEnabled || isLoading || cartLoading || checkoutItems.length === 0}
                     className="w-full bg-accent hover:bg-accent/90 h-12 text-accent-foreground"
                   >
                     {isLoading ? t('checkout.processing') : t('checkout.sslButton')}
@@ -647,6 +673,11 @@ export default function CheckoutClient({ settings }: { settings?: CheckoutSettin
               <CardTitle>{t('checkout.orderSummary')}</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
+              {selectionActive && (
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-primary">
+                  {t('checkout.selectedNotice')} {checkoutItems.length}
+                </div>
+              )}
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{t('common.subtotal')}</span>
@@ -673,7 +704,7 @@ export default function CheckoutClient({ settings }: { settings?: CheckoutSettin
               <div className="bg-muted/30 p-4 rounded-lg space-y-2 text-sm">
                 <h4 className="font-semibold text-foreground mb-3">{t('checkout.yourOrder')}</h4>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t('checkout.items')} ({cartItems.length})</span>
+                  <span className="text-muted-foreground">{t('checkout.items')} ({checkoutItems.length})</span>
                   <span>৳{subtotal}</span>
                 </div>
               </div>

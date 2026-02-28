@@ -9,14 +9,19 @@ type PaymentMethod = 'sslcommerz' | 'cod'
 interface CheckoutPayload {
   paymentMethod: PaymentMethod
   address: {
-    full_name: string
-    phoneNumber: string
+    full_name?: string
+    fullName?: string
+    phone_number?: string
+    phoneNumber?: string
     division: string
     district: string
     thana: string
-    fullAddress: string
+    full_address?: string
+    fullAddress?: string
   }
   couponCode?: string
+  selectedCartItemIds?: string[]
+  selectedItemIds?: string[]
 }
 
 const DEFAULT_FLAT_SHIPPING_RATE = 60
@@ -30,13 +35,22 @@ export async function POST(request: NextRequest) {
     }
 
     const { paymentMethod, address } = body
+    const normalizedAddress = {
+      full_name: address.full_name ?? address.fullName ?? '',
+      phone_number: address.phone_number ?? address.phoneNumber ?? '',
+      division: address.division ?? '',
+      district: address.district ?? '',
+      thana: address.thana ?? '',
+      full_address: address.full_address ?? address.fullAddress ?? '',
+    }
+
     const requiredFields = [
-      address.full_name,
-      address.phoneNumber,
-      address.division,
-      address.district,
-      address.thana,
-      address.fullAddress,
+      normalizedAddress.full_name,
+      normalizedAddress.phone_number,
+      normalizedAddress.division,
+      normalizedAddress.district,
+      normalizedAddress.thana,
+      normalizedAddress.full_address,
     ]
     if (requiredFields.some((value) => !value)) {
       return NextResponse.json({ error: 'Missing address fields' }, { status: 400 })
@@ -78,7 +92,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 })
     }
 
-    const subtotal = cartItems.reduce((sum, item) => {
+    const selectionIdsRaw = Array.isArray(body.selectedCartItemIds)
+      ? body.selectedCartItemIds
+      : Array.isArray(body.selectedItemIds)
+        ? body.selectedItemIds
+        : null
+    const selectionIds = selectionIdsRaw
+      ? Array.from(new Set(selectionIdsRaw.map((id) => String(id)).filter(Boolean)))
+      : null
+
+    const checkoutItems = selectionIds
+      ? cartItems.filter((item) => selectionIds.includes(String(item.id)))
+      : cartItems
+
+    if (selectionIds && checkoutItems.length === 0) {
+      return NextResponse.json({ error: 'Selected items are not available' }, { status: 400 })
+    }
+
+    const subtotal = checkoutItems.reduce((sum, item) => {
       const price = item.product?.discount_price ?? item.product?.price ?? 0
       return sum + price * (item.quantity || 1)
     }, 0)
@@ -165,7 +196,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: orderError?.message || 'Failed to create order' }, { status: 500 })
     }
 
-    const orderItems = cartItems.map((item) => ({
+    const orderItems = checkoutItems.map((item) => ({
       order_id: order.id,
       product_id: item.product_id,
       variant_id: item.variant_id || null,
@@ -180,18 +211,22 @@ export async function POST(request: NextRequest) {
 
     const { error: addressError } = await supabase.from('order_addresses').insert({
       order_id: order.id,
-      division: address.division,
-      district: address.district,
-      thana: address.thana,
-      full_address: address.fullAddress,
-      phone_number: address.phoneNumber,
+      division: normalizedAddress.division,
+      district: normalizedAddress.district,
+      thana: normalizedAddress.thana,
+      full_address: normalizedAddress.full_address,
+      phone_number: normalizedAddress.phone_number,
     })
 
     if (addressError) {
       return NextResponse.json({ error: addressError.message }, { status: 500 })
     }
 
-    await supabase.from('cart').delete().eq('user_id', authData.user.id)
+    const deleteQuery = supabase.from('cart').delete().eq('user_id', authData.user.id)
+    if (selectionIds) {
+      deleteQuery.in('id', selectionIds)
+    }
+    await deleteQuery
 
     if (paymentMethod === 'cod') {
       await supabase.from('payment_logs').insert({
@@ -208,12 +243,12 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         amount: total,
         orderId: order.order_number,
-        customerName: address.full_name,
+        customerName: normalizedAddress.full_name,
         // customerEmail: address.email || authData.user.email || 'customer@example.com',
-        customerPhone: address.phoneNumber,
-        customerAddress: address.fullAddress,
-        customerCity: address.district,
-        customerState: address.division,
+        customerPhone: normalizedAddress.phone_number,
+        customerAddress: normalizedAddress.full_address,
+        customerCity: normalizedAddress.district,
+        customerState: normalizedAddress.division,
         description: 'Fashion Accessories',
       }),
     })

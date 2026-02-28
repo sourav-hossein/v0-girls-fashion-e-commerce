@@ -111,7 +111,14 @@ const bn = {
     "itemRemoved": "কার্ট থেকে আইটেম সরানো হয়েছে",
     "removeFailed": "আইটেম সরাতে ব্যর্থ",
     "enterCoupon": "কুপন কোড লিখুন",
-    "couponApplied": "কুপন প্রয়োগ হয়েছে!"
+    "couponApplied": "কুপন প্রয়োগ হয়েছে!",
+    "selectAll": "সব নির্বাচন করুন",
+    "selectItem": "আইটেম নির্বাচন করুন",
+    "selectedCount": "নির্বাচিত",
+    "selectAtLeastOne": "চেকআউট করতে অন্তত একটি আইটেম নির্বাচন করুন",
+    "checkoutMode": "চেকআউট মোড",
+    "checkoutAll": "সব আইটেম চেকআউট করুন",
+    "checkoutSelected": "নির্বাচিত আইটেম চেকআউট করুন"
   },
   "wishlist": {
     "title": "উইশলিস্ট",
@@ -171,6 +178,8 @@ const bn = {
     "orderFailed": "অর্ডার দেওয়া যায়নি",
     "paymentFailed": "পেমেন্ট ব্যর্থ হয়েছে",
     "paymentRedirect": "পেমেন্ট গেটওয়েতে নিয়ে যাচ্ছে...",
+    "selectedNotice": "চেকআউটের জন্য নির্বাচিত আইটেম:",
+    "selectedEmpty": "কোনও নির্বাচিত আইটেম নেই। অনুগ্রহ করে কার্টে ফিরে যান।",
     "sslCommerz": "এসএসএলকমার্জ (কার্ড, বিকাশ, নগদ)"
   },
   "account": {

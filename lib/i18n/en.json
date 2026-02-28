@@ -111,7 +111,14 @@
     "itemRemoved": "Item removed from cart",
     "removeFailed": "Failed to remove item",
     "enterCoupon": "Please enter a coupon code",
-    "couponApplied": "Coupon applied!"
+    "couponApplied": "Coupon applied!",
+    "selectAll": "Select all",
+    "selectItem": "Select item",
+    "selectedCount": "Selected",
+    "selectAtLeastOne": "Please select at least one item to checkout",
+    "checkoutMode": "Checkout mode",
+    "checkoutAll": "Checkout all items",
+    "checkoutSelected": "Checkout selected items"
   },
   "wishlist": {
     "title": "Wishlist",
@@ -170,7 +177,9 @@
     "orderPlacedBody": "Redirecting to your order confirmation...",
     "orderFailed": "Failed to place order",
     "paymentFailed": "Failed to process payment",
-    "paymentRedirect": "Redirecting to payment gateway..."
+    "paymentRedirect": "Redirecting to payment gateway...",
+    "selectedNotice": "Selected items for checkout:",
+    "selectedEmpty": "No selected items found. Please return to cart."
   },
   "account": {
     "title": "My Account",
