@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select'
 import { Plus, Trash2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
+import { ProductImageManager } from '@/components/product-image-manager'
 
 type VariantRow = {
   id?: string
@@ -447,80 +448,17 @@ export default function AdminProductForm({
           <CardTitle className="text-xl font-serif">Media</CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <label className="inline-flex items-center gap-2 text-sm font-medium">
-              <span className="sr-only">Upload images</span>
-              <Input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleUploadImages}
-                disabled={uploading || !product?.id}
-              />
-            </label>
-            {!product?.id && (
-              <p className="text-xs text-muted-foreground">
-                Save the product before uploading images.
-              </p>
-            )}
-          </div>
-
-          {sortedImages.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No images uploaded.</p>
+          {product?.id ? (
+            <ProductImageManager
+              productId={product.id}
+              images={imageRows}
+              onImagesChange={setImageRows}
+              onUploadingChange={setUploading}
+            />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sortedImages.map((image) => (
-                <div key={image.id} className="border border-border rounded-lg p-4 space-y-3">
-                  <div className="aspect-square bg-muted rounded-lg overflow-hidden">
-                    <img
-                      src={image.image_url}
-                      alt={image.alt_text || 'Product image'}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Alt text</Label>
-                    <Input
-                      value={image.alt_text ?? ''}
-                      onChange={(event) => handleImageFieldChange(image.id, 'alt_text', event.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-2">
-                      <Label>Order</Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={image.display_order}
-                        onChange={(event) =>
-                          handleImageFieldChange(image.id, 'display_order', Number(event.target.value))
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Main</Label>
-                      <Button
-                        type="button"
-                        variant={image.is_main ? 'default' : 'outline'}
-                        onClick={() => handleSetMainImage(image.id)}
-                        className="w-full"
-                      >
-                        {image.is_main ? 'Main Image' : 'Set Main'}
-                      </Button>
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="text-destructive hover:text-destructive w-full"
-                    onClick={() => handleDeleteImage(image.id)}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Image
-                  </Button>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground border border-dashed border-border rounded-lg p-4">
+              Save the product first before uploading images.
+            </p>
           )}
 
           {uploading && (

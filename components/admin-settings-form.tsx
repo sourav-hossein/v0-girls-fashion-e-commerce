@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { toast } from 'sonner'
+import { HeroBannerManager } from '@/components/hero-banner-manager'
 
 type StoreSettings = {
   store_name: string
@@ -317,6 +318,15 @@ export default function AdminSettingsForm() {
               }
             />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border">
+        <CardHeader className="border-b border-border">
+          <CardTitle>Hero Banners</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <HeroBannerManager />
         </CardContent>
       </Card>
 

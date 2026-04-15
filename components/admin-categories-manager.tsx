@@ -15,6 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Check, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react'
+import { CategoryImageManager } from '@/components/category-image-manager'
 
 type CategoryForm = {
   name: string
