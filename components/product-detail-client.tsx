@@ -152,13 +152,27 @@ export default function ProductDetailClient({
         {/* Images */}
         <div className="space-y-4">
           <div className="aspect-square bg-muted rounded-2xl overflow-hidden flex items-center justify-center">
-            {
-              <img
-                src={activeImage?.image_url || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKwAAACUCAMAAAA5xjIqAAAA3lBMVEX////x7+Lf3dA7g4JNo6Tp6ens7Ozy8vJfX2FFR0h6fHxISUxqamvg39Xj4dQ5OTvX1ck/PkCCgn8yMjUoKS1MmptCe3rTpUdiYmH1u1BxcnHttk9NTlBBjIvx7uUwfn48nJ2trqqhoJ3Q0c0eHiK+vr7d3dxWV1bIyMGMjI7Bv7b16c315sP026rtu1nbvnvzzYrTnznSplHXrmLhxIznyojwwGjwxnn07tj1uETp1qzR2tGFraZVjYihvLdil5K6y8PK4dqOwb9srauy0srf6uFSXmA6S0xAampVdndhYC+IAAADS0lEQVR4nO3ai1aiQBzH8bhsRsQgYalFo922m12strVQUsq2ff8X2oEUUUeZzpmBcc//+wSffmcc8cTaGgRBEARBEARBEARBEARBEARBEATxrnS4zdwmc0frIqzHjm0YhsOWW2HKdd3KySl/688z0/MMZ2OPqa0aS17Fjv6yY+7YI8fzzLNzjJXssKKWWVLPz1zHqVzwtpa2Dc+sMUC/QipTCNdsx67xPralTcNzLnljVXRJsBsisBtl/thyzRaCNbYs7li1vOWuElbMsiZgAQtYwAIWsP8LFitXrSuF8ogrI/b6pr5frd5erQC2c/dcj7Dt+5b0WHxXr8fYavWhIzu29Zxg249YcuyvCbZ6L/my+Kk+wbY7cmOVVcLi36uEvU59wB4kP7NK52aCfWHBImRZCBWDVV5uxthHJRuL/K7WaPSCgrBK6+n5eb/dnrdSsMh/bWga4XZRMVilc333dPs4/2hAWza2RvVRMVjaAxcNa6moO7Y2XgtadmGzy06sRJueVkIs6muTpqaVDztlJdoAyYtFvtaY1vrFYTN+1owuLfq0smHV7oxV03o+KgpLGgThANOx1rxVa3StwrDDsEkKMQ2LgnkrybcKwg7fmjqpGVKwMxfB5PpCxWAH+qiUdkSxUL9HxSbfDDljg6ae9D677NxFkPRawLI4TFn15nAaixZaNe3r+soPi8fHNeltmMbSLoLkHPT8nJf1m9NWvTnSxliLfhGMtUG+2PcZaqxNsChYQo2ycsGO/jUezlEjbRB9o0VYf9mu0bTRb4aclp09romWXAmYMPyDjGHj3wz5YAdUadwgWnbxpZWaVkW5YN8XW3V9qCC05CJIT5sDdhjSj8BEy2QlX7risYuOa1K49NJKafuqaOxAz7DqevaH6wvbswRjlx7X72HJZ2xPJDbruH4Pq+1+CMRmHtfvYv+IeaGHYLHPZpUCS3kYkBTr1bqsVgmwHzusVgmwngisIQhr7vLHfjqiljUPeGPJsAKwaxeOR7R/d9jSdpn6jF8M3izxxp6SZSMuW47NVPwWc+WQt5VM65oec4xvW0ed7HEflnTkOYy7mqbtsmZzfy951PoP/gmiQhAEQRAEQRAEQRAEQRAEQRAEQdz7B8uxwA5hpAHmAAAAAElFTkSuQmCC"}
-                alt={activeImage?.alt_text || product.name}
-                className="w-full h-full object-cover"
-              />
-            }
+            {(() => {
+              const getMockImage = (slug: string) => {
+                if (slug.includes('hijab')) return '/images/hijab_product_1776280418363.png'
+                if (slug.includes('bag')) return '/images/handbag_product_1776280436394.png'
+                if (slug.includes('bracelet') || slug.includes('earring') || slug.includes('ring')) return '/images/bracelet_product_1776280450787.png'
+                if (slug.includes('dress') || slug.includes('combo')) return '/images/dress_product_1776280403083.png'
+                return '/images/dress_product_1776280403083.png'
+              }
+
+              const displayImage = activeImage?.image_url && !activeImage.image_url.includes('unsplash') 
+                ? activeImage.image_url 
+                : getMockImage(product.slug)
+
+              return (
+                <img
+                  src={displayImage}
+                  alt={activeImage?.alt_text || product.name}
+                  className="w-full h-full object-cover transition-transform duration-700 ease-out hover:scale-105"
+                />
+              )
+            })()}
           </div>
           {images.length > 1 && (
             <div className="grid grid-cols-4 gap-3">

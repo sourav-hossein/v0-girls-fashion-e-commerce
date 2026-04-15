@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -27,15 +27,26 @@ export default function ProductCard({ product, image }: ProductCardProps) {
     ? Math.round(((product.price - product.discount_price) / product.price) * 100)
     : 0
 
+  const getMockImage = (slug: string) => {
+    if (slug.includes('hijab')) return '/images/hijab_product_1776280418363.png'
+    if (slug.includes('bag')) return '/images/handbag_product_1776280436394.png'
+    if (slug.includes('bracelet') || slug.includes('earring') || slug.includes('ring')) return '/images/bracelet_product_1776280450787.png'
+    if (slug.includes('dress') || slug.includes('combo')) return '/images/dress_product_1776280403083.png'
+    return '/images/dress_product_1776280403083.png'
+  }
+
+  // Use DB image iff it's not unsplash since they might be random or broken. Otherwise use our tailored mock images.
+  const displayImage = image && !image.includes('unsplash') ? image : getMockImage(product.slug)
+
   return (
-    <Card className="hover:shadow-lg transition-all duration-300 overflow-hidden group h-full flex flex-col relative">
+    <Card className="hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 overflow-hidden group h-full flex flex-col relative glass border-white/50">
       <Link href={`/product/${product.slug}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-muted cursor-pointer">
-          {image ? (
+          {displayImage ? (
             <img
-              src={image}
+              src={displayImage}
               alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">

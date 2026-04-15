@@ -54,13 +54,12 @@ export default function Hero() {
 
           <div className="hidden md:block">
             <div className="relative aspect-square rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/20 overflow-hidden flex items-center justify-center">
-              <div className="text-center">
+              <div className="text-center w-full h-full p-2">
                 <img
-                  src="/placeholder.jpg"
-                  alt={t('home.featuredImageLabel')}
-                  className="w-full h-full object-cover rounded-2xl"
+                  src="/images/hero_banner_1776280197610.png"
+                  alt={t('home.heroHeading')}
+                  className="w-full h-full object-cover rounded-2xl shadow-xl hover:scale-[1.02] transition-transform duration-500 ease-out"
                 />
-                <p className="text-muted-foreground text-sm">{t('home.featuredImageLabel')}</p>
               </div>
             </div>
           </div>
