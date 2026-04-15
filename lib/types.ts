@@ -148,3 +148,17 @@ export interface PaymentLog {
   created_at: string
   updated_at: string
 }
+
+export interface HeroBanner {
+  id: string
+  title: string
+  subtitle?: string
+  desktop_image_url?: string
+  mobile_image_url?: string
+  cta_text?: string
+  cta_url?: string
+  display_order: number
+  active: boolean
+  created_at: string
+  updated_at: string
+}
