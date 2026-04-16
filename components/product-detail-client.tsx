@@ -6,6 +6,7 @@ import { Heart, ShoppingCart, Star, Truck, RefreshCw } from 'lucide-react'
 import { Product, ProductImage, ProductVariant, Review } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SafeImage } from '@/components/ui/safe-image'
 import { toast } from 'sonner'
 import ProductCard from './product-card'
 import { addToCart, CartAuthError } from '@/lib/cart-api'
@@ -166,11 +167,16 @@ export default function ProductDetailClient({
                 : getMockImage(product.slug)
 
               return (
-                <img
-                  src={displayImage}
-                  alt={activeImage?.alt_text || product.name}
-                  className="w-full h-full object-cover transition-transform duration-700 ease-out hover:scale-105"
-                />
+                <div className="relative h-full w-full">
+                  <SafeImage
+                    src={displayImage}
+                    alt={activeImage?.alt_text || product.name}
+                    fill
+                    priority
+                    className="object-cover transition-transform duration-700 ease-out hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                  />
+                </div>
               )
             })()}
           </div>
@@ -186,11 +192,15 @@ export default function ProductDetailClient({
                       : 'border-transparent hover:border-primary/50'
                   }`}
                 >
-                  <img
-                    src={image.image_url}
-                    alt={image.alt_text || product.name}
-                    className="w-full h-full object-cover"
-                  />
+                  <div className="relative h-full w-full">
+                    <SafeImage
+                      src={image.image_url}
+                      alt={image.alt_text || product.name}
+                      fill
+                      className="object-cover"
+                      sizes="25vw"
+                    />
+                  </div>
                 </button>
               ))}
             </div>

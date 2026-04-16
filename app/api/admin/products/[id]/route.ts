@@ -4,48 +4,10 @@ import { createServerClient } from '@supabase/ssr'
 import { createAdminSupabaseClient } from '@/lib/supabase-admin'
 import { revalidatePath } from 'next/cache'
 
-async function requireAdminApi() {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
-          )
-        },
-      },
-    },
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'admin') {
-    return { ok: false, response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
-  }
-
-  return { ok: true, user }
-}
+import { requireAdminRequest } from '@/lib/admin-api'
 
 export async function PATCH(request: Request, context: { params: { id: string } }) {
-  const auth = await requireAdminApi()
+  const auth = await requireAdminRequest()
   if (!auth.ok) return auth.response
 
   const body = await request.json().catch(() => ({}))
@@ -62,7 +24,7 @@ export async function PATCH(request: Request, context: { params: { id: string } 
 
   if (product && typeof product === 'object') {
     const updatePayload: Record<string, any> = {
-      updated_at: new Date().toISOString(),
+      updated_at: new Date(),
     }
     if (typeof product.name === 'string') updatePayload.name = product.name.trim()
     if (typeof product.slug === 'string') updatePayload.slug = product.slug.trim()
@@ -94,47 +56,29 @@ export async function PATCH(request: Request, context: { params: { id: string } 
   if (deleted_at === null) {
     const { error: restoreError } = await supabase
       .from('products')
-      .update({ deleted_at: null, updated_at: new Date().toISOString() })
+      .update({ deleted_at: null, updated_at: new Date() })
       .eq('id', productId)
     if (restoreError) {
       return NextResponse.json({ error: restoreError.message }, { status: 500 })
     }
   }
 
-  if (Array.isArray(variants_upsert)) {
-    for (const variant of variants_upsert) {
-      const variantType = typeof variant?.variant_type === 'string' ? variant.variant_type.trim() : ''
-      const variantValue = typeof variant?.variant_value === 'string' ? variant.variant_value.trim() : ''
-      const qty = Number(variant?.stock_quantity)
-      if (!variantType || !variantValue || !Number.isFinite(qty)) continue
+  if (Array.isArray(variants_upsert) && variants_upsert.length > 0) {
+    const upsertData = variants_upsert.map((v) => ({
+      id: v.id || undefined, // undefined for new rows
+      product_id: productId,
+      variant_type: typeof v.variant_type === 'string' ? v.variant_type.trim() : '',
+      variant_value: typeof v.variant_value === 'string' ? v.variant_value.trim() : '',
+      stock_quantity: Number(v.stock_quantity),
+      updated_at: new Date(),
+    })).filter(v => v.variant_type && v.variant_value && Number.isFinite(v.stock_quantity))
 
-      if (variant?.id) {
-        const { error: variantError } = await supabase
-          .from('product_variants')
-          .update({
-            variant_type: variantType,
-            variant_value: variantValue,
-            stock_quantity: qty,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', variant.id)
-          .eq('product_id', productId)
-        if (variantError) {
-          return NextResponse.json({ error: variantError.message }, { status: 500 })
-        }
-      } else {
-        const { error: insertError } = await supabase
-          .from('product_variants')
-          .insert({
-            product_id: productId,
-            variant_type: variantType,
-            variant_value: variantValue,
-            stock_quantity: qty,
-            updated_at: new Date().toISOString(),
-          })
-        if (insertError) {
-          return NextResponse.json({ error: insertError.message }, { status: 500 })
-        }
+    if (upsertData.length > 0) {
+      const { error: upsertError } = await supabase
+        .from('product_variants')
+        .upsert(upsertData)
+      if (upsertError) {
+        return NextResponse.json({ error: upsertError.message }, { status: 500 })
       }
     }
   }
@@ -191,7 +135,7 @@ export async function PATCH(request: Request, context: { params: { id: string } 
 }
 
 export async function DELETE(_: Request, context: { params: { id: string } }) {
-  const auth = await requireAdminApi()
+  const auth = await requireAdminRequest()
   if (!auth.ok) return auth.response
 
   const supabase = await createAdminSupabaseClient()
@@ -199,7 +143,7 @@ export async function DELETE(_: Request, context: { params: { id: string } }) {
 
   const { error } = await supabase
     .from('products')
-    .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .update({ deleted_at: new Date(), updated_at: new Date() })
     .eq('id', productId)
 
   if (error) {

@@ -1,5 +1,6 @@
 import { Review, Product, ProductImage } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
+import { SafeImage } from '@/components/ui/safe-image'
 import Link from 'next/link'
 
 interface ReviewWithProduct extends Review {
@@ -53,7 +54,15 @@ export default function ReviewsStrip({ reviews }: ReviewsStripProps) {
                       <Link href={`/product/${product.slug}`} className="mt-auto flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full overflow-hidden bg-muted flex items-center justify-center">
                           {image ? (
-                            <img src={image} alt={product.name} className="w-full h-full object-cover" />
+                            <div className="relative h-full w-full">
+                              <SafeImage
+                                src={image}
+                                alt={product.name}
+                                fill
+                                className="object-cover"
+                                sizes="48px"
+                              />
+                            </div>
                           ) : (
                             <span className="text-xs text-muted-foreground">Item</span>
                           )}

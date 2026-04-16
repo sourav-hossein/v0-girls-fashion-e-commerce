@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Product, Category, ProductImage } from '@/lib/types'
 import ProductCard from './product-card'
 import { Button } from '@/components/ui/button'
@@ -18,7 +18,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { SlidersHorizontal, X } from 'lucide-react'
+import { SlidersHorizontal } from 'lucide-react'
 
 interface ShopClientProps {
   initialProducts: (Product & { product_images?: ProductImage[] })[]
@@ -29,6 +29,11 @@ interface ShopClientProps {
   totalPages: number
   totalProducts: number
   searchQuery?: string
+}
+
+const getMainImage = (product: Product & { product_images?: ProductImage[] }) => {
+  const images = product.product_images || []
+  return images.find((img) => img.is_main) || images[0]
 }
 
 export default function ShopClient({
@@ -42,7 +47,6 @@ export default function ShopClient({
   searchQuery,
 }: ShopClientProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [minPrice, setMinPrice] = useState<string>('')
   const [maxPrice, setMaxPrice] = useState<string>('')
   const [search, setSearch] = useState(searchQuery || '')
@@ -343,7 +347,3 @@ export default function ShopClient({
     </div>
   )
 }
-  const getMainImage = (product: Product & { product_images?: ProductImage[] }) => {
-    const images = product.product_images || []
-    return images.find((img) => img.is_main) || images[0]
-  }

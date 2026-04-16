@@ -18,6 +18,8 @@ export interface Category {
   slug: string
   description?: string
   image_url?: string
+  image_path?: string | null
+  image_alt?: string | null
   created_at: string
   updated_at: string
 }
@@ -47,6 +49,10 @@ export interface ProductImage {
   is_main: boolean
   display_order: number
   storage_path?: string | null
+  width?: number | null
+  height?: number | null
+  mime_type?: string | null
+  file_size?: number | null
   created_at: string
 }
 
@@ -154,7 +160,11 @@ export interface HeroBanner {
   title: string
   subtitle?: string
   desktop_image_url?: string
+  desktop_image_path?: string | null
+  desktop_image_alt?: string | null
   mobile_image_url?: string
+  mobile_image_path?: string | null
+  mobile_image_alt?: string | null
   cta_text?: string
   cta_url?: string
   display_order: number

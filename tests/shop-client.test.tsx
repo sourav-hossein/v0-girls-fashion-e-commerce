@@ -128,7 +128,7 @@ describe('ShopClient', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: /sort by/i }))
+    await user.click(screen.getByRole('combobox'))
     await user.click(screen.getByRole('option', { name: 'Price: Low to High' }))
     expect(pushMock).toHaveBeenCalledWith(expect.stringContaining('sort=price-low'))
   })

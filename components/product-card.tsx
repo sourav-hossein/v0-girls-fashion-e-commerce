@@ -6,6 +6,7 @@ import { Heart, ShoppingCart } from 'lucide-react'
 import { Product } from '@/lib/types'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { SafeImage } from '@/components/ui/safe-image'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { addToCart, CartAuthError } from '@/lib/cart-api'
@@ -43,10 +44,12 @@ export default function ProductCard({ product, image }: ProductCardProps) {
       <Link href={`/product/${product.slug}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-muted cursor-pointer">
           {displayImage ? (
-            <img
+            <SafeImage
               src={displayImage}
               alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+              fill
+              className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">

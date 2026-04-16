@@ -14,7 +14,7 @@ import ReviewsStrip from '@/components/reviews-strip'
 import Newsletter from '@/components/newsletter'
 import Footer from '@/components/footer'
 import { getCachedCategories } from '@/lib/categories'
-import { Product, ProductImage } from '@/lib/types'
+import { HeroBanner, Product, ProductImage } from '@/lib/types'
 
 export const revalidate = 60 // revalidate every 60 seconds
 
@@ -159,6 +159,21 @@ async function getLatestReviews() {
   return reviews || []
 }
 
+async function getActiveHeroBanners(): Promise<HeroBanner[]> {
+  const supabase = await createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from('hero_banners')
+    .select('*')
+    .eq('active', true)
+    .order('display_order', { ascending: true })
+
+  if (error) {
+    return []
+  }
+
+  return data || []
+}
+
 export default async function Home() {
   const supabase = await createServerSupabaseClient()
   const cookieStore = await cookies()
@@ -175,6 +190,7 @@ export default async function Home() {
     flashSaleProducts,
     newArrivals,
     latestReviews,
+    heroBanners,
   ] = await Promise.all([
     supabase
       .from('products')
@@ -194,6 +210,7 @@ export default async function Home() {
     getFlashSaleProducts(),
     getNewArrivals(),
     getLatestReviews(),
+    getActiveHeroBanners(),
   ])
 
   const featuredProducts = featuredProductsResult.data || []
@@ -203,7 +220,7 @@ export default async function Home() {
   return (
     <main className="bg-background">
       <Header />
-      <Hero />
+      <Hero banners={heroBanners} />
       <RecommendedProducts
         title={hasPersonalized ? 'Recommended For You' : 'Curated Picks'}
         subtitle={hasPersonalized ? 'Based on your recent activity' : 'Trending styles picked just for you'}

@@ -192,6 +192,7 @@ export function HeroBannerExample() {
 
 import { useImageUpload } from '@/hooks/use-image-upload'
 import { Button } from '@/components/ui/button'
+import { SafeImage } from '@/components/ui/safe-image'
 
 export function CustomUploadExample() {
   const {
@@ -233,8 +234,14 @@ export function CustomUploadExample() {
 
       <div className="grid grid-cols-3 gap-4">
         {uploadedImages.map((img) => (
-          <div key={img.id} className="relative">
-            <img src={img.url} alt={img.name} className="rounded-lg" />
+          <div key={img.id} className="relative aspect-square overflow-hidden rounded-lg">
+            <SafeImage
+              src={img.url}
+              alt={img.name}
+              fill
+              className="rounded-lg object-cover"
+              sizes="33vw"
+            />
             <Button
               variant="destructive"
               size="sm"

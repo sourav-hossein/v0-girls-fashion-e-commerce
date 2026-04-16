@@ -1,56 +1,16 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
 import { createAdminSupabaseClient } from '@/lib/supabase-admin'
-
-async function assertAdmin() {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
-          )
-        },
-      },
-    },
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'admin') {
-    return { ok: false, response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
-  }
-
-  return { ok: true }
-}
-
-function getFileExtension(fileName: string) {
-  const parts = fileName.split('.')
-  if (parts.length < 2) return ''
-  return parts[parts.length - 1].toLowerCase()
-}
+import { requireAdminRequest } from '@/lib/admin-api'
+import {
+  buildStoragePath,
+  revalidateStorefrontPaths,
+  sanitizeText,
+  uploadPublicImage,
+  validateImageFile,
+} from '@/lib/media'
 
 export async function POST(request: Request, context: { params: { id: string } }) {
-  const auth = await assertAdmin()
+  const auth = await requireAdminRequest()
   if (!auth.ok) return auth.response
 
   const productId = context.params.id
@@ -61,26 +21,46 @@ export async function POST(request: Request, context: { params: { id: string } }
     return NextResponse.json({ error: 'File is required.' }, { status: 400 })
   }
 
-  const alt_text = typeof formData.get('alt_text') === 'string' ? String(formData.get('alt_text')) : ''
-  const is_main = formData.get('is_main') === 'true'
-  const display_order = Number(formData.get('display_order') ?? 0)
-  const extension = getFileExtension(file.name)
-  const fileId = crypto.randomUUID()
-  const filePath = `${productId}/${fileId}${extension ? `.${extension}` : ''}`
-
-  const supabase = await createAdminSupabaseClient()
-  const { error: uploadError } = await supabase.storage
-    .from('product-images')
-    .upload(filePath, file, {
-      contentType: file.type || 'application/octet-stream',
-      upsert: false,
-    })
-
-  if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 })
+  try {
+    validateImageFile(file)
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Invalid image.' },
+      { status: 400 },
+    )
   }
 
-  if (is_main) {
+  const alt_text = sanitizeText(formData.get('alt_text'))
+  const is_main = formData.get('is_main') === 'true'
+  const display_order = Number(formData.get('display_order') ?? 0)
+
+  const supabase = await createAdminSupabaseClient()
+  const { count } = await supabase
+    .from('product_images')
+    .select('*', { count: 'exact', head: true })
+    .eq('product_id', productId)
+
+  const shouldBeMain = is_main || (count || 0) === 0
+
+  let uploaded
+  try {
+    uploaded = await uploadPublicImage({
+      supabase,
+      bucket: 'product-images',
+      file,
+      path: buildStoragePath({
+        entityId: productId,
+        fileName: file.name,
+      }),
+    })
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Upload failed.' },
+      { status: 500 },
+    )
+  }
+
+  if (shouldBeMain) {
     const { error: resetError } = await supabase
       .from('product_images')
       .update({ is_main: false })
@@ -90,19 +70,17 @@ export async function POST(request: Request, context: { params: { id: string } }
     }
   }
 
-  const { data: publicUrlData } = supabase.storage
-    .from('product-images')
-    .getPublicUrl(filePath)
-
   const { data, error } = await supabase
     .from('product_images')
     .insert({
       product_id: productId,
-      image_url: publicUrlData.publicUrl,
-      storage_path: filePath,
+      image_url: uploaded.publicUrl,
+      storage_path: uploaded.path,
       alt_text: alt_text.trim() || null,
-      is_main,
+      is_main: shouldBeMain,
       display_order: Number.isFinite(display_order) ? display_order : 0,
+      mime_type: file.type || null,
+      file_size: file.size,
     })
     .select('*')
     .single()
@@ -111,5 +89,12 @@ export async function POST(request: Request, context: { params: { id: string } }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  const { data: product } = await supabase
+    .from('products')
+    .select('slug')
+    .eq('id', productId)
+    .single()
+
+  revalidateStorefrontPaths(product?.slug ? [`/product/${product.slug}`] : [])
   return NextResponse.json({ image: data })
 }

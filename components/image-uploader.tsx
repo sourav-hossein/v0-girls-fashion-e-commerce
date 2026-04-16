@@ -2,10 +2,9 @@
 
 import { useCallback, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Upload, Trash2, X, GripVertical } from 'lucide-react'
+import { Upload, Trash2, GripVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useImageUpload, UploadedImage } from '@/hooks/use-image-upload'
 import {
@@ -104,14 +103,6 @@ export function ImageUploader({
     onImagesChange?.(updated)
   }
 
-  const handleReorder = (fromIndex: number, toIndex: number) => {
-    const newImages = [...localImages]
-    const [removed] = newImages.splice(fromIndex, 1)
-    newImages.splice(toIndex, 0, removed)
-    setLocalImages(newImages)
-    onImagesChange?.(newImages)
-  }
-
   const isMaxReached = localImages.length >= maxFiles
 
   return (
@@ -181,7 +172,7 @@ export function ImageUploader({
       {/* Images Grid */}
       {localImages.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {localImages.map((image, index) => (
+          {localImages.map((image) => (
             <div
               key={image.id}
               className="relative group"
