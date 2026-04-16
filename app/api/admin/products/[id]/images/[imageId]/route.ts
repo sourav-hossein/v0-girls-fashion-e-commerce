@@ -1,50 +1,10 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
 import { createAdminSupabaseClient } from '@/lib/supabase-admin'
-
-async function assertAdmin() {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
-          )
-        },
-      },
-    },
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'admin') {
-    return { ok: false, response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
-  }
-
-  return { ok: true }
-}
+import { requireAdminRequest } from '@/lib/admin-api'
+import { deleteStoredImage, revalidateStorefrontPaths } from '@/lib/media'
 
 export async function DELETE(_: Request, context: { params: { id: string; imageId: string } }) {
-  const auth = await assertAdmin()
+  const auth = await requireAdminRequest()
   if (!auth.ok) return auth.response
 
   const { id: productId, imageId } = context.params
@@ -52,7 +12,7 @@ export async function DELETE(_: Request, context: { params: { id: string; imageI
 
   const { data: image, error: imageError } = await supabase
     .from('product_images')
-    .select('storage_path')
+    .select('storage_path, is_main')
     .eq('id', imageId)
     .eq('product_id', productId)
     .single()
@@ -61,13 +21,17 @@ export async function DELETE(_: Request, context: { params: { id: string; imageI
     return NextResponse.json({ error: imageError.message }, { status: 500 })
   }
 
-  if (image?.storage_path) {
-    const { error: storageError } = await supabase.storage
-      .from('product-images')
-      .remove([image.storage_path])
-    if (storageError) {
-      return NextResponse.json({ error: storageError.message }, { status: 500 })
-    }
+  try {
+    await deleteStoredImage({
+      supabase,
+      bucket: 'product-images',
+      path: image?.storage_path,
+    })
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to delete image.' },
+      { status: 500 },
+    )
   }
 
   const { error: deleteError } = await supabase
@@ -80,5 +44,30 @@ export async function DELETE(_: Request, context: { params: { id: string; imageI
     return NextResponse.json({ error: deleteError.message }, { status: 500 })
   }
 
+  if (image?.is_main) {
+    const { data: remaining } = await supabase
+      .from('product_images')
+      .select('id')
+      .eq('product_id', productId)
+      .order('display_order', { ascending: true })
+      .limit(1)
+
+    const nextImageId = remaining?.[0]?.id
+    if (nextImageId) {
+      await supabase
+        .from('product_images')
+        .update({ is_main: true })
+        .eq('id', nextImageId)
+        .eq('product_id', productId)
+    }
+  }
+
+  const { data: product } = await supabase
+    .from('products')
+    .select('slug')
+    .eq('id', productId)
+    .single()
+
+  revalidateStorefrontPaths(product?.slug ? [`/product/${product.slug}`] : [])
   return NextResponse.json({ success: true })
 }

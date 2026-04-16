@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Category } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
+import { SafeImage } from '@/components/ui/safe-image'
 
 interface CategoriesSectionProps {
   categories: Category[]
@@ -29,11 +30,15 @@ export default function CategoriesSection({ categories }: CategoriesSectionProps
                 <Card className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 h-full group overflow-hidden">
                   <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-3 h-full">
                     <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden">
-                      <img
-                        src={category.image_url || 'https://via.placeholder.com/150'}
-                        alt={category.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+                      <div className="relative h-full w-full">
+                        <SafeImage
+                          src={category.image_url}
+                          alt={category.image_alt || category.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 640px) 96px, 128px"
+                        />
+                      </div>
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground text-sm sm:text-base group-hover:text-primary transition-colors">

@@ -4,45 +4,7 @@ import { createServerClient } from '@supabase/ssr'
 import { createAdminSupabaseClient } from '@/lib/supabase-admin'
 import { revalidatePath } from 'next/cache'
 
-async function assertAdmin() {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
-          )
-        },
-      },
-    },
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'admin') {
-    return { ok: false, response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
-  }
-
-  return { ok: true }
-}
+import { requireAdminRequest } from '@/lib/admin-api'
 
 function sanitizeInput(value: unknown) {
   if (typeof value !== 'string') return ''
@@ -50,7 +12,7 @@ function sanitizeInput(value: unknown) {
 }
 
 export async function GET(request: Request) {
-  const auth = await assertAdmin()
+  const auth = await requireAdminRequest()
   if (!auth.ok) return auth.response
 
   const { searchParams } = new URL(request.url)
@@ -61,7 +23,7 @@ export async function GET(request: Request) {
   const supabase = await createAdminSupabaseClient()
   let query = supabase
     .from('products')
-    .select('*, product_images (id, image_url, is_main, display_order)')
+    .select('*, categories (name), product_images (id, image_url, is_main, display_order)')
     .order('created_at', { ascending: false })
 
   if (!includeDeleted) {
@@ -85,7 +47,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await assertAdmin()
+  const auth = await requireAdminRequest()
   if (!auth.ok) return auth.response
 
   const payload = await request.json().catch(() => ({}))
@@ -116,7 +78,7 @@ export async function POST(request: Request) {
         : null,
       featured: Boolean(payload?.featured),
       trending: Boolean(payload?.trending),
-      updated_at: new Date().toISOString(),
+      updated_at: new Date(),
     })
     .select('*')
     .single()

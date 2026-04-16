@@ -5,13 +5,25 @@ import ProductDetailClient from '@/components/product-detail-client'
 import { renderWithProviders } from './test-utils'
 import { Product, ProductImage, ProductVariant, Review } from '@/lib/types'
 
-const pushMock = vi.fn()
-const addToCartMock = vi.fn()
-const trackEventMock = vi.fn()
-const toastSuccessMock = vi.fn()
-const toastErrorMock = vi.fn()
+const {
+  pushMock,
+  addToCartMock,
+  trackEventMock,
+  toastSuccessMock,
+  toastErrorMock,
+  MockCartAuthError,
+} = vi.hoisted(() => {
+  class HoistedMockCartAuthError extends Error {}
 
-class MockCartAuthError extends Error {}
+  return {
+    pushMock: vi.fn(),
+    addToCartMock: vi.fn(),
+    trackEventMock: vi.fn(),
+    toastSuccessMock: vi.fn(),
+    toastErrorMock: vi.fn(),
+    MockCartAuthError: HoistedMockCartAuthError,
+  }
+})
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock }),

@@ -273,3 +273,4 @@ For support, please contact support@fashionhub.bd or open an issue on the reposi
 - SSLCommerz for Bangladesh payment processing
 - shadcn/ui for beautiful components
 - Tailwind CSS for utility-first styling
+supabase mcp access token - 06a6612b-7328-4f32-bc79-adb00a997146
